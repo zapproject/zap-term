@@ -200,11 +200,15 @@ async function doBondage(provider: ZapProvider, token: ZapToken, bondage: ZapBon
 
 	const oracle: string = await ask('Oracle (Address)> ');
 	const endpoint: string = await ask('Endpoint> ');
-	const dots: number = parseInt(await ask('DOTS> '));
 
+	let bound: number = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint});
+
+	console.log('You have', bound, 'DOTs bound. How many would you like to bond?');
+
+	const dots: number = parseInt(await ask('DOTS> '));
 	const amount = await provider.zapBondage.calcZapForDots({ endpoint, dots, provider: oracle });
 
-	console.log('This will require', amount, 'ZAP.');
+	console.log('This will require', amount, 'ZAP. Bonding', dots, ' DOTs...');
 
 	if ( amount > bal ) {
 		console.log('Balance insufficent.');
@@ -213,10 +217,10 @@ async function doBondage(provider: ZapProvider, token: ZapToken, bondage: ZapBon
 
 	const txid: string | any = await token.approve({ to: bondage.contract.options['address'], amount, from: provider.providerOwner });
 
-	console.log('Approved bondage for', amount, 'ZAP');
+	console.log('Approved the bondage contract for', amount, 'ZAP');
 	console.log('Transaction Info:', typeof txid == 'string' ? txid : txid.transactionHash);
 
-	console.log('Waiting 15 seconds to send transaction.');
+	console.log('Waiting 15 seconds to send bond request.');
 
 	await sleep(15 * 1000);
 
@@ -227,7 +231,7 @@ async function doBondage(provider: ZapProvider, token: ZapToken, bondage: ZapBon
 	console.log('Bonded to endpoint.');
 	console.log('Transaction Info:', typeof bond_txid == 'string' ? bond_txid : bond_txid.transactionHash);
 
-	const bound: number = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint});
+	bound = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint});
 	console.log('You now have', bound, 'DOTs bonded.');
 }
 
