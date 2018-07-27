@@ -381,11 +381,19 @@ async function main() {
 	const token: ZapToken = contracts.zapToken;
 
 	// If title hasn't been set bring them to the createProvider page
-	const title = await provider.getTitle();
+	let title = await provider.getTitle();
 
 	if ( title.length == 0 ) {
-		console.warn('Failed to find your provider title, please initiate your provider.');
-		await createProvider(provider);
+		console.warn('Failed to find your provider title, no provider instantiated');
+		console.log('Do you want to create a provider now?')
+
+		if ( (await ask('Create Provider [y/N]> ')) == 'y' ) {
+			await createProvider(provider);
+			title = await provider.getTitle();
+		}
+		else {
+			console.log('Not creating a provider now.');
+		}
 	}
 
 	console.log('Found provider:', title);
@@ -404,7 +412,12 @@ async function main() {
 			process.exit(0);
 		}
 		else if ( option == '1' ) {
-			await createProviderCurve(provider);
+			if ( title == '' ) {
+				console.log('No provider currently created, please create one before creating a curve.');
+			}
+			else {
+				await createProviderCurve(provider);
+			}
 		}
 		else if ( option == '2' ) {
 			await getEndpointInfo(provider);
