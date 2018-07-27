@@ -1,4 +1,5 @@
 import { ZapArbiter } from "@zapjs/arbiter";
+import { Curve } from "@zapjs/curve";
 import { ZapBondage } from "@zapjs/bondage";
 import { ZapDispatch } from "@zapjs/dispatch";
 import { ZapRegistry } from "@zapjs/registry";
@@ -146,6 +147,105 @@ async function createProvider(provider: ZapProvider): Promise<void> {
 }
 
 /**
+ * Create a piecewise function for a provider
+ * Uses math.js to parse an equation and then processes that into the params
+ * @returns The encoded params
+ */
+async function createCurve(): Promise<Curve> {
+	const constants: number[] = [];
+	const parts: number[] = [];
+	const dividers: number[] = [];
+
+	while ( true ) {
+		const _start: string = await ask('Start> ');
+
+		if ( _start == '' ) {
+			break;
+		}
+
+		const start: number = parseInt(_start);
+		const end: number = parseInt(await ask('End> '));
+
+		if ( isNaN(start) || isNaN(end) ) {
+			console.error('Start and end must be numbers');
+			continue;
+		}
+
+		const curve: string = await ask('Curve> ');
+		const terms: string[] = curve.split('+').map(term => term.trim());
+		let error: boolean = false;
+
+		for ( const term of terms ) {
+			let coef: number = 1;
+			let exp: number = 0;
+			let fn: number = 0;
+
+			const tokens: string[] = [];
+			const tokenRegex = /\s*([A-Za-z]+|[0-9]+|\S)\s*/g;
+
+			let m;
+			while ((m = tokenRegex.exec(term)) !== null) {
+				tokens.push(m[1]);
+			}
+
+			for ( let i = 0; i < tokens.length; i++ ) {
+				const token = tokens[i];
+
+				if ( !isNaN(+token) ) {
+					coef *= +token;
+
+					if ( i < tokens.length - 1 && tokens[i + 1] == 'zap' ) {
+						coef *= 1e18;
+						i++;
+					}
+				}
+				else if ( token == 'x' ) {
+					exp = 1;
+				}
+				else if ( token == '*' ) {
+					continue;
+				}
+				else if ( token == '^' ) {
+					if ( i == tokens.length - 1 ) {
+						console.error('Must specify an exponent.');
+						error = true;						
+
+						break;
+					}
+
+					const exponent: string = tokens[++i];
+
+					if ( isNaN(+exponent) ) {
+						console.error('Exponent must be a number');
+						error = true;
+
+						break;
+					}
+
+					exp = +exponent;
+				}
+			}
+
+			if ( error ) {
+				break;
+			}
+
+			constants.push(coef, exp, fn);
+		}
+
+		if ( error ) {
+			continue;
+		}
+
+		parts.push(start);
+		parts.push(end);
+		dividers.push(constants.length / 3);
+	}
+
+	return new Curve(constants, parts, dividers);
+}
+
+/**
  * Create a provider curve for a ZapProvider instance based on user input
  *
  * @param provider - Provider to use
@@ -153,11 +253,9 @@ async function createProvider(provider: ZapProvider): Promise<void> {
 async function createProviderCurve(provider: ZapProvider): Promise<void> {
 	try {
 		const endpoint: string = await ask('Endpoint> ');
-		const constants: number[] = JSON.parse(await ask('Constants> '));
-		const parts: number[] = JSON.parse(await ask('Parts> '));
-		const dividers: number[] = JSON.parse(await ask('Dividers> '));
+		const curve: Curve = await createCurve();
 
-		await provider.initiateProviderCurve({ endpoint, constants, parts, dividers });
+		await provider.initiateProviderCurve({ endpoint, constants: curve.constants, parts: curve.parts, dividers: curve.dividers });
 
 		console.log('Created endpoint', endpoint);
 	}
@@ -206,7 +304,7 @@ async function doBondage(provider: ZapProvider, token: ZapToken, bondage: ZapBon
 	console.log('You have', bound, 'DOTs bound. How many would you like to bond?');
 
 	const dots: number = parseInt(await ask('DOTS> '));
-	const amount = await provider.zapBondage.calcZapForDots({ endpoint, dots, provider: oracle });
+	const amount = (await provider.zapBondage.calcZapForDots({ endpoint, dots, provider: oracle }));
 
 	console.log('This will require', amount, 'ZAP. Bonding', dots, ' DOTs...');
 
@@ -306,7 +404,7 @@ async function main() {
 			process.exit(0);
 		}
 		else if ( option == '1' ) {
-			await createProvider(provider);
+			await createProviderCurve(provider);
 		}
 		else if ( option == '2' ) {
 			await getEndpointInfo(provider);
