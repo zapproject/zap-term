@@ -127,7 +127,7 @@ async function loadProvider(web3: any): Promise<{ contracts: any, provider: ZapP
 async function createProvider(provider: ZapProvider): Promise<void> {
 	console.log('Create a provider');
 	const title = await ask('Title> ');
-	const public_key = await ask('Public Key> ');
+	const public_key = await ask('Public Key (hex)> ');
 	const endpoint = await ask('Endpoint> ');
 	const endpoint_params: string[] = [];
 
