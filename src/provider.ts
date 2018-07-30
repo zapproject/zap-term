@@ -141,9 +141,9 @@ export async function doBondage(provider: ZapProvider, token: ZapToken, bondage:
 	const dots: number = parseInt(await ask('DOTS> '));
 	const amount = (await provider.zapBondage.calcZapForDots({ endpoint, dots, provider: oracle }));
 
-	console.log('This will require', amount, 'ZAP. Bonding', dots, ' DOTs...');
+	console.log('This will require', amount/1e18, 'ZAP. Bonding', dots, ' DOTs...');
 
-	if ( amount > bal ) {
+	if ( amount > (bal * 1e18) ) {
 		console.log('Balance insufficent.');
 		return;
 	}
