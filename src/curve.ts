@@ -1,5 +1,5 @@
 import { ask } from "./util";
-import { Curve } from "@zapjs/curve";
+import { Curve, CurveType } from "@zapjs/curve";
 
 /**
  * Create a piecewise function for a provider
@@ -99,3 +99,45 @@ export async function createCurve(): Promise<Curve> {
 
 	return new Curve(constants, parts, dividers);
 }
+
+/** 
+ * Create a string representing a piecewise function
+ * @param curve The curve to be stringified
+ * @returns The stringified curve
+ */
+export function curveString(curve: CurveType): string {
+	let output = "";
+	let pStart = 0;
+
+	for ( let i = 0; i < curve.dividers.length; i++ ) {
+		const start = curve.parts[2 * i];
+		const end = curve.parts[(2 * i) + 1];
+
+		let strs = [];
+
+		for ( let j = pStart; j < curve.dividers[i]; j++ ) {
+			const coef = curve.constants[(3 * j)];
+			const power = curve.constants[(3 * j) + 1];
+			const fn = curve.constants[(3 * j) + 2];
+
+			let str = coef.toString();
+
+			if ( power > 0 ) {
+				const exp = power == 1 ? 'x' : `x^${power}`;
+
+				switch ( fn ) {
+					case 0:  str += `|${exp}|`; break;
+					case 1:  str += `log2(${exp})`; break;
+					default: str += exp; break;
+				}				
+			}
+
+			strs.push(str);
+		}
+
+		output += strs.join(" + ") + `on (${start} to ${end}\n`;
+	}
+
+	return output;
+}
+

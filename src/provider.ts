@@ -4,7 +4,7 @@ import { ZapProvider } from "@zapjs/provider";
 import { ZapToken } from "@zapjs/zaptoken";
 
 import { sleep, loadContracts, loadAccount, ask } from "./util";
-import { createCurve } from "./curve";
+import { createCurve, curveString } from "./curve";
 
 /**
  * Loads a ZapProvider from a given Web3 instance
@@ -117,7 +117,7 @@ export async function getEndpointInfo(provider: ZapProvider): Promise<void> {
 		return;
 	}
 
-	console.log('Curve:', curve);
+	console.log('Curve:', curveString(curve));
 	console.log('DOTs Bound:', bound);
 	console.log('ZAP Bound:', zapBound);
 }
