@@ -16,6 +16,7 @@
     "@zapjs/dispatch": "^1.0.2",
     "@zapjs/provider": "^1.0.2",
     "@zapjs/registry": "^1.0.3",
+    "@zapjs/subscriber": "^1.0.2",
     "@zapjs/zaptoken": "^1.0.3",
     "truffle-hdwallet-provider": "0.0.5",
     "truffle-hdwallet-provider-privkey": "^0.2.0",

@@ -1,5 +1,6 @@
 import { ask } from "./util";
 import { loadProvider, createProvider, createProviderCurve, getEndpointInfo, doBondage, doUnbondage } from "./provider";
+import { loadSubscriber, doQuery } from "./subscriber";
 
 const HDWalletProvider = require("truffle-hdwallet-provider-privkey");
 const HDWalletProviderMem = require("truffle-hdwallet-provider");
@@ -22,6 +23,7 @@ async function main() {
 
 	// Get the provider and contracts
 	const { provider, contracts } = await loadProvider(web3);
+	const { subscriber,  } = await loadSubscriber(web3);
 
 	// If title hasn't been set bring them to the createProvider page
 	let title = await provider.getTitle();
@@ -53,6 +55,7 @@ async function main() {
 		console.log('2) Get Endpoint');
 		console.log('3) Bond Zap');
 		console.log('4) Unbond Zap');
+		console.log('5) Query');
 
 		const option: string = await ask('Option> ');
 
@@ -77,6 +80,9 @@ async function main() {
 		}
 		else if ( option == '4' ) {
 			await doUnbondage(provider, contracts.zapToken, contracts.zapBondage);
+		}
+		else if ( option == '5' ) {
+			await doQuery(subscriber);
 		}
 		else {
 			console.error('Unknown option', option);
