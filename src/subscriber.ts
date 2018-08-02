@@ -87,14 +87,14 @@ export async function doQuery(subscriber: Subscriber): Promise<void> {
 		let fulfilled = false;
 		
 		// Get the off chain response
-		subscriber.zapDispatch.contract.events.OffchainResult1({ id }, (err: any, data: any) => {
+		subscriber.zapDispatch.listenOffchainResponse({ id }, (err: any, data: any) => {
 			// Only call once
 			if ( fulfilled ) return;
 			fulfilled = true;
 
 			// Output response
 			if ( err ) reject(err);
-			else       resolve(data.returnValues.response1);
+			else       resolve(data.returnValues.response);
 		});
 	});
 	
