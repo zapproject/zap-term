@@ -39,6 +39,11 @@ export async function loadSubscriber(web3: any): Promise<{ contracts: any, subsc
 	};
 }
 
+/**
+ * Do a query and receive the response as the bytes32 array.
+ * 
+ * @param subscriber The subscriber to do the query with
+ */
 export async function doQuery(subscriber: Subscriber): Promise<void> {
 	const provider: string = await ask('Provider Address> ');
 	const endpoint: string = await ask('Endpoint> ');

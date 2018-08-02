@@ -135,7 +135,7 @@ export function curveString(curve: CurveType): string {
 			strs.push(str);
 		}
 
-		output += strs.join(" + ") + `on (${start} to ${end}\n`;
+		output += strs.join(" + ") + `on (${start} to ${end}]\n`;
 	}
 
 	return output;

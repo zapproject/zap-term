@@ -108,9 +108,9 @@ export async function getEndpointInfo(provider: ZapProvider): Promise<void> {
 	const oracle: string = await ask('Oracle (Address)> ');
 	const endpoint: string = await ask('Endpoint> ');
 
-	const bound: number = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint});
-	const zapBound : number = await provider.getZapBound(endpoint);
-	const curve = await provider.getCurve(endpoint);
+	const bound: number = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint });
+	const curve = await provider.zapRegistry.getProviderCurve(oracle, endpoint);
+	const totalBound: number = await provider.zapBondage.getDotsIssued({ provider: oracle, endpoint });
 
 	if ( curve.constants.length == 0 ) {
 		console.log('Unable to find the endpoint.');
@@ -119,7 +119,7 @@ export async function getEndpointInfo(provider: ZapProvider): Promise<void> {
 
 	console.log('Curve:', curveString(curve));
 	console.log('DOTs Bound:', bound);
-	console.log('ZAP Bound:', zapBound);
+	console.log('Total DOTs:', totalBound);
 }
 
 /**
