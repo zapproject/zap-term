@@ -73,5 +73,31 @@ export async function doQuery(subscriber: Subscriber): Promise<void> {
 
 	console.log('Querying provider...');
 	const txid: any = await subscriber.zapDispatch.queryData({ provider, query, endpoint, endpointParams, onchainProvider, onchainSubscriber, from: subscriber.subscriberOwner, gas: Utils.Constants.DEFAULT_GAS });
-	console.log('Queried provider. Transaction info:', typeof txid == 'string' ? txid : txid.transactionHash);
+	const _id = txid.events['Incoming'].returnValues['id'];
+	console.log('Queried provider. Transaction Hash:', typeof txid == 'string' ? txid : txid.transactionHash);
+
+	const web3 = subscriber.zapArbiter.web3;
+	const num = web3.utils.toBN(_id);
+	const id = '0x' + num.toString(16);
+	console.log('Query ID generate was', id);
+
+	// Create a promise to get response
+	const promise: Promise<any> = new Promise((resolve: any, reject: any) => {
+		console.log('Waiting for response');
+		let fulfilled = false;
+		
+		// Get the off chain response
+		subscriber.zapDispatch.contract.events.OffchainResult1({ id }, (err: any, data: any) => {
+			// Only call once
+			if ( fulfilled ) return;
+			fulfilled = true;
+
+			// Output response
+			if ( err ) reject(err);
+			else       resolve(data.returnValues.response1);
+		});
+	});
+	
+	const res = await promise;
+	console.log('Response', res);
 }

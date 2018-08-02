@@ -19,7 +19,7 @@ async function main() {
 
 	// Load the mnemonic and web3 instance
 	const mnemonic = await ask('Whats your mnemonic: ');
-	const web3: any = new Web3(new HDWalletProviderMem(mnemonic, "https://kovan.infura.io"));	 
+	const web3: any = new Web3(new HDWalletProviderMem(mnemonic, "wss://kovan.infura.io/_ws"));	 
 
 	// Get the provider and contracts
 	const { provider, contracts } = await loadProvider(web3);
