@@ -90,12 +90,13 @@ export async function createProviderCurve(provider: ZapProvider): Promise<void> 
 		const endpoint: string = await ask('Endpoint> ');
 		const curve: Curve = await createCurve();
 
-		await provider.initiateProviderCurve({ endpoint, constants: curve.constants, parts: curve.parts, dividers: curve.dividers });
+		console.log(curveString(curve));
+		await provider.zapRegistry.initiateProviderCurve({endpoint, curve, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000') });
 
 		console.log('Created endpoint', endpoint);
 	}
 	catch(err) {
-		console.log('Failed to parse your input');
+		console.log('Failed to parse your input', err);
 	}
 }
 

@@ -113,7 +113,7 @@ export function curveString(curve: CurveType): string {
 		const start = curve.parts[2 * i];
 		const end = curve.parts[(2 * i) + 1];
 
-		let strs = [];
+		const strs = [];
 
 		for ( let j = pStart; j < curve.dividers[i]; j++ ) {
 			const coef = curve.constants[(3 * j)];
@@ -135,6 +135,7 @@ export function curveString(curve: CurveType): string {
 			strs.push(str);
 		}
 
+		pStart = curve.dividers[i];
 		output += strs.join(" + ") + ` on (${start} to ${end}]\n`;
 	}
 
