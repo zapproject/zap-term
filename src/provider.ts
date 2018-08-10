@@ -91,8 +91,20 @@ export async function createProviderCurve(provider: ZapProvider): Promise<void> 
 		const curve: Curve = await createCurve();
 
 		console.log(curveString(curve));
-		await provider.zapRegistry.initiateProviderCurve({endpoint, curve, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000') });
+		const endpoint_params: string[] = [];
 
+		console.log('Give the params for the endpoint. Give an empty one to continue.');
+		while ( true ) {
+			const endpoint_param: string = await ask('Endpoint Param> ');
+
+			if ( endpoint_param.length == 0 ) {
+				break;
+			}
+
+			endpoint_params.push(endpoint_param);
+		}
+		await provider.zapRegistry.initiateProviderCurve({endpoint, curve, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000') });
+		await provider.zapRegistry.setEndpointParams({endpoint, endpoint_params, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000')})
 		console.log('Created endpoint', endpoint);
 	}
 	catch(err) {
