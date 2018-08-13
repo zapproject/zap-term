@@ -7,39 +7,32 @@ import { Curve, CurveType } from "@zapjs/curve";
  * @returns The encoded params
  */
 export async function createCurve(): Promise<Curve> {
-	const constants: number[] = [];
-	const parts: number[] = [];
-	const dividers: number[] = [];
+	let start = 1;
+	const _curve: number[] = [];
 
 	while ( true ) {
-		const _start: string = await ask('Start> ');
+		const end: number = parseInt(await ask(`Curve starting at ${start} to> `));
 
-		if ( _start == '' ) {
-			break;
-		}
-
-		const start: number = parseInt(_start);
-		const end: number = parseInt(await ask('End> '));
-
-		if ( isNaN(start) || isNaN(end) ) {
+		if ( isNaN(end) ) {
 			console.error('Start and end must be numbers');
 			continue;
 		}
 
 		const curve: string = await ask('Curve> ');
 		const terms: string[] = curve.split('+').map(term => term.trim());
+
+		const current_curve: number[] = [];
 		let error: boolean = false;
 
 		for ( const term of terms ) {
 			let coef: number = 1;
 			let exp: number = 0;
-			let fn: number = 0;
 
 			const tokens: string[] = [];
 			const tokenRegex = /\s*([A-Za-z]+|[0-9]+|\S)\s*/g;
 
 			let m;
-			while ((m = tokenRegex.exec(term)) !== null) {
+			while ( (m = tokenRegex.exec(term)) !== null ) {
 				tokens.push(m[1]);
 			}
 
@@ -85,19 +78,22 @@ export async function createCurve(): Promise<Curve> {
 				break;
 			}
 
-			constants.push(coef, exp, fn);
+			while ( current_curve.length < exp ) {
+				current_curve.push(0);
+			}
+
+			current_curve[exp] = coef;
 		}
 
 		if ( error ) {
 			continue;
 		}
 
-		parts.push(start);
-		parts.push(end);
-		dividers.push(constants.length / 3);
+		_curve.push(current_curve.length, ...current_curve, end);
+		start = end + 1;
 	}
 
-	return new Curve(constants, parts, dividers);
+	return new Curve(_curve);
 }
 
 /** 
@@ -107,36 +103,19 @@ export async function createCurve(): Promise<Curve> {
  */
 export function curveString(curve: CurveType): string {
 	let output = "";
-	let pStart = 0;
 
-	for ( let i = 0; i < curve.dividers.length; i++ ) {
-		const start = curve.parts[2 * i];
-		const end = curve.parts[(2 * i) + 1];
+	let start = 1;
+	let index = 0;
 
-		const strs = [];
+	while ( index < curve.length ) {
+		const length = curve[index];
+		const base = index + 1;
+		const poly = curve.slice(base, base + length);
+		const end = curve[base + length];
 
-		for ( let j = pStart; j < curve.dividers[i]; j++ ) {
-			const coef = curve.constants[(3 * j)];
-			const power = curve.constants[(3 * j) + 1];
-			const fn = curve.constants[(3 * j) + 2];
+		output += poly.map((x, i) => `${x}x^${i}`).join(" + ") + `on (${start} to ${end}]\n`;
 
-			let str = coef.toString();
-
-			if ( power > 0 ) {
-				const exp = power == 1 ? 'x' : `x^${power}`;
-
-				switch ( fn ) {
-					case 0:  str += `|${exp}|`; break;
-					case 1:  str += `log2(${exp})`; break;
-					default: str += exp; break;
-				}				
-			}
-
-			strs.push(str);
-		}
-
-		pStart = curve.dividers[i];
-		output += strs.join(" + ") + ` on (${start} to ${end}]\n`;
+		index = base + length + 1;
 	}
 
 	return output;

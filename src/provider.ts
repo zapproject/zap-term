@@ -33,7 +33,7 @@ export async function loadProvider(web3: any): Promise<{ contracts: any, provide
 	};
 
 	return {
-		provider: new ZapProvider(Object.assign(contracts, { owner, handler })),
+		provider: new ZapProvider(owner, Object.assign(contracts, { handler })),
 		contracts: contracts
 	};
 }
@@ -90,8 +90,8 @@ export async function createProviderCurve(provider: ZapProvider): Promise<void> 
 		const endpoint: string = await ask('Endpoint> ');
 		const curve: Curve = await createCurve();
 
-		console.log(curveString(curve));
-		await provider.zapRegistry.initiateProviderCurve({endpoint, curve, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000') });
+		console.log(curveString(curve.values));
+		await provider.zapRegistry.initiateProviderCurve({endpoint, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000'), term: curve.values });
 
 		console.log('Created endpoint', endpoint);
 	}
@@ -113,12 +113,12 @@ export async function getEndpointInfo(provider: ZapProvider): Promise<void> {
 	const curve = await provider.zapRegistry.getProviderCurve(oracle, endpoint);
 	const totalBound: number = await provider.zapBondage.getDotsIssued({ provider: oracle, endpoint });
 
-	if ( curve.constants.length == 0 ) {
+	if ( curve.values.length == 0 ) {
 		console.log('Unable to find the endpoint.');
 		return;
 	}
 
-	console.log('Curve:', curveString(curve));
+	console.log('Curve:', curveString(curve.values));
 	console.log('DOTs Bound:', bound);
 	console.log('Total DOTs:', totalBound);
 }
@@ -160,7 +160,7 @@ export async function doBondage(provider: ZapProvider, token: ZapToken, bondage:
 
 	console.log('Doing the bond...');
 
-	const bond_txid: string | any = await provider.zapBondage.bond({ provider: oracle, endpoint, zapNum: amount, from: provider.providerOwner });
+	const bond_txid: string | any = await provider.zapBondage.bond({ provider: oracle, endpoint, from: provider.providerOwner, dots });
 
 	console.log('Bonded to endpoint.');
 	console.log('Transaction Info:', typeof bond_txid == 'string' ? bond_txid : bond_txid.transactionHash);

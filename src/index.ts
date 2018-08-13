@@ -28,7 +28,7 @@ async function main() {
 	// If title hasn't been set bring them to the createProvider page
 	let title = await provider.getTitle();
 
-	if ( true ) {
+	if ( title.length == 0 ) {
 		console.warn('Failed to find your provider title, no provider instantiated');
 		console.log('Do you want to create a provider now?')
 

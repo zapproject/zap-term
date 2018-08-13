@@ -1,6 +1,6 @@
 import { ZapBondage } from "@zapjs/bondage";
 import { Curve } from "@zapjs/curve";
-import { Subscriber } from "@zapjs/subscriber";
+import { ZapSubscriber } from "@zapjs/subscriber";
 import { ZapToken } from "@zapjs/zaptoken";
 import { Utils } from "@zapjs/utils";
 
@@ -13,7 +13,7 @@ import { createCurve, curveString } from "./curve";
  * @param web3 - Web3 instance to load from
  * @returns ZapProvider instantiated
  */
-export async function loadSubscriber(web3: any): Promise<{ contracts: any, subscriber: Subscriber }> {
+export async function loadSubscriber(web3: any): Promise<{ contracts: any, subscriber: ZapSubscriber }> {
 	const owner: string = await loadAccount(web3);
 
 	console.log("Found address:", owner);
@@ -34,7 +34,7 @@ export async function loadSubscriber(web3: any): Promise<{ contracts: any, subsc
 	};
 
 	return {
-		subscriber: new Subscriber(Object.assign(contracts, { owner, handler })),
+		subscriber: new ZapSubscriber(owner, Object.assign(contracts, { handler })),
 		contracts: contracts
 	};
 }
@@ -44,7 +44,7 @@ export async function loadSubscriber(web3: any): Promise<{ contracts: any, subsc
  * 
  * @param subscriber The subscriber to do the query with
  */
-export async function doQuery(subscriber: Subscriber): Promise<void> {
+export async function doQuery(subscriber: ZapSubscriber): Promise<void> {
 	const provider: string = await ask('Provider Address> ');
 	const endpoint: string = await ask('Endpoint> ');
 	
