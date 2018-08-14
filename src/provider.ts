@@ -1,49 +1,17 @@
-import { ZapBondage } from "@zapjs/bondage";
 import { Curve } from "@zapjs/curve";
 import { ZapProvider } from "@zapjs/provider";
-import { ZapToken } from "@zapjs/zaptoken";
+import { ZapSubscriber } from "@zapjs/subscriber";
+import { txid, DEFAULT_GAS } from "@zapjs/types";
 
-import { sleep, loadContracts, loadAccount, ask } from "./util";
+import { sleep, loadContracts, loadAccount, ask, loadProvider, loadSubscriber } from "./util";
 import { createCurve, curveString } from "./curve";
-
-/**
- * Loads a ZapProvider from a given Web3 instance
- *
- * @param web3 - Web3 instance to load from
- * @returns ZapProvider instantiated
- */
-export async function loadProvider(web3: any): Promise<{ contracts: any, provider: ZapProvider }> {
-	const owner: string = await loadAccount(web3);
-
-	console.log("Found address:", owner);
-	console.log("It has", await web3.eth.getBalance(owner)/1e18, "ETH");
-
-	const contracts = await loadContracts(web3);
-
-	const handler = {
-		handleIncoming: (data: string) => {
-			console.log('handleIncoming', data);
-		},
-		handleUnsubscription: (data: string) => {
-			console.log('handleUnsubscription', data);
-		},
-		handleSubscription: (data: string) => {
-			console.log('handleSubscription', data);
-		},
-	};
-
-	return {
-		provider: new ZapProvider(owner, Object.assign(contracts, { handler })),
-		contracts: contracts
-	};
-}
 
 /**
  * Create a provider for a ZapProvider instance based on user input
  *
  * @param provider - Provider to use
  */
-export async function createProvider(provider: ZapProvider): Promise<void> {
+export async function createProvider(web3: any): Promise<void> {
 	console.log('Create a provider');
 	const title = await ask('Title> ');
 
@@ -54,12 +22,9 @@ export async function createProvider(provider: ZapProvider): Promise<void> {
 
 	const public_key = await ask('Public Key (hex)> ');
 
-	try {
-		// This catches empty strings aswell.
-		provider.zapArbiter.web3.utils.hexToString(public_key);
-	}
-	catch ( err ) {
+	if ( !public_key.startsWith('0x') ) {
 		console.log('Not creating provider now. Public key must be a hex string.');
+		return;
 	}
 
 	const endpoint = await ask('Endpoint> ');
@@ -77,6 +42,8 @@ export async function createProvider(provider: ZapProvider): Promise<void> {
 	}
 
 	console.log('Creating provider...');
+
+	const provider = await loadProvider(web3, await loadAccount(web3));
 	await provider.initiateProvider({ public_key, title, endpoint, endpoint_params });
 }
 
@@ -85,13 +52,15 @@ export async function createProvider(provider: ZapProvider): Promise<void> {
  *
  * @param provider - Provider to use
  */
-export async function createProviderCurve(provider: ZapProvider): Promise<void> {
+export async function createProviderCurve(web3: any): Promise<void> {
 	try {
+		const provider = await loadProvider(web3, await loadAccount(web3));
+
 		const endpoint: string = await ask('Endpoint> ');
 		const curve: Curve = await createCurve();
 
 		console.log(curveString(curve.values));
-		await provider.zapRegistry.initiateProviderCurve({endpoint, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000'), term: curve.values });
+		await provider.initiateProviderCurve({ endpoint, gas: DEFAULT_GAS.toNumber(), term: curve.values, from: '' });
 
 		console.log('Created endpoint', endpoint);
 	}
@@ -105,13 +74,17 @@ export async function createProviderCurve(provider: ZapProvider): Promise<void> 
  *
  * @param provier - Provider to use
  */
-export async function getEndpointInfo(provider: ZapProvider): Promise<void> {
+export async function getEndpointInfo(web3: any): Promise<void> {
+	const user: string = await loadAccount(web3);
+
 	const oracle: string = await ask('Oracle (Address)> ');
 	const endpoint: string = await ask('Endpoint> ');
 
-	const bound: number = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint });
-	const curve = await provider.zapRegistry.getProviderCurve(oracle, endpoint);
-	const totalBound: number = await provider.zapBondage.getDotsIssued({ provider: oracle, endpoint });
+	const provider = await loadProvider(web3, oracle);
+
+	const bound: number = await provider.getBoundDots({ subscriber: user, endpoint });
+	const curve = await provider.getCurve(endpoint);
+	const totalBound: number = await provider.getDotsIssued(endpoint);
 
 	if ( curve.values.length == 0 ) {
 		console.log('Unable to find the endpoint.');
@@ -119,79 +92,78 @@ export async function getEndpointInfo(provider: ZapProvider): Promise<void> {
 	}
 
 	console.log('Curve:', curveString(curve.values));
-	console.log('DOTs Bound:', bound);
+	console.log('Your DOTs Bound:', bound);
 	console.log('Total DOTs:', totalBound);
 }
 
 /**
- * Conduct a bondage for a given provider
- *
- * @param provider - Provider to use
+ * Do a query and receive the response as the bytes32 array.
+ * 
+ * @param subscriber The subscriber to do the query with
  */
-export async function doBondage(provider: ZapProvider, token: ZapToken, bondage: ZapBondage) {
-	const bal = await token.balanceOf(provider.providerOwner);
-	console.log('You have', bal, 'ZAP');
+export async function doQuery(web3: any): Promise<void> {
+	const user: string = await loadAccount(web3);
+	const subscriber: ZapSubscriber = await loadSubscriber(web3, user);
 
-	const oracle: string = await ask('Oracle (Address)> ');
+	const provider_address: string = await ask('Provider Address> ');
 	const endpoint: string = await ask('Endpoint> ');
+	const provider: ZapProvider = await loadProvider(web3, provider_address);
 
-	let bound: number = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint});
+	const bound: number = await provider.getBoundDots({ subscriber: user, endpoint});
 
-	console.log('You have', bound, 'DOTs bound. How many would you like to bond?');
-
-	const dots: number = parseInt(await ask('DOTS> '));
-	const amount = (await provider.zapBondage.calcZapForDots({ endpoint, dots, provider: oracle }));
-
-	console.log('This will require', amount/1e18, 'ZAP. Bonding', dots, ' DOTs...');
-
-	if ( amount > (bal * 1e18) ) {
-		console.log('Balance insufficent.');
+	if ( bound == 0 ) {
+		console.log('You do not have any bound dots to this provider');
 		return;
 	}
 
-	const txid: string | any = await token.approve({ to: bondage.contract.options['address'], amount, from: provider.providerOwner });
+	console.log(`You have ${bound} DOTs bound to this provider's endpoint. 1 DOT will be used.'`);
 
-	console.log('Approved the bondage contract for', amount, 'ZAP');
-	console.log('Transaction Info:', typeof txid == 'string' ? txid : txid.transactionHash);
+	const endpointParams: string[] = [];
 
-	console.log('Waiting 15 seconds to send bond request.');
+	console.log(`'Input your provider's endpoint paramaters. Enter a blank line to skip.'`)
 
-	await sleep(15 * 1000);
+	while ( true ) {
+		const endpointParam: string = await ask('Endpoint Params> ');
 
-	console.log('Doing the bond...');
+		if ( endpointParam.length == 0 ) {
+			break;
+		}
 
-	const bond_txid: string | any = await provider.zapBondage.bond({ provider: oracle, endpoint, from: provider.providerOwner, dots });
+		endpointParams.push(endpointParam);
+	}
 
-	console.log('Bonded to endpoint.');
-	console.log('Transaction Info:', typeof bond_txid == 'string' ? bond_txid : bond_txid.transactionHash);
+	const onchainProvider: boolean = (await ask('Is the provider on chain [y/N]> ')) == 'y';
+	// Default this to false. We are off chain.
+	const onchainSubscriber: boolean = false;
 
-	bound = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint});
-	console.log('You now have', bound, 'DOTs bonded.');
-}
+	const query: string = await ask('Query> ');
 
-/**
- * Conduct an unbondage for a given provider
- *
- * @param provider - Provider to use
- */
-export async function doUnbondage(provider: ZapProvider, token: ZapToken, bondage: ZapBondage) {
-	const oracle: string = await ask('Oracle (Address)> ');
-	const endpoint: string = await ask('Endpoint> ');
-	let bound: number = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint});
+	console.log('Querying provider...');
+	const txid: any = await subscriber.queryData({ provider, query, endpoint, endpointParams, onchainProvider, onchainSubscriber });
+	const _id = txid.events['Incoming'].returnValues['id'];
+	console.log('Queried provider. Transaction Hash:', typeof txid == 'string' ? txid : txid.transactionHash);
 
-	console.log('You have', bound, 'DOTs bonded. How many would you like to unbond?');
+	const num = web3.utils.toBN(_id);
+	const id = '0x' + num.toString(16);
+	console.log('Query ID generate was', id);
 
-	const amount: number = parseInt(await ask('Amount> '));
+	// Create a promise to get response
+	const promise: Promise<any> = new Promise((resolve: any, reject: any) => {
+		console.log('Waiting for response');
+		let fulfilled = false;
+		
+		// Get the off chain response
+		subscriber.listenOffchainResponse({ id }, (err: any, data: any) => {
+			// Only call once
+			if ( fulfilled ) return;
+			fulfilled = true;
 
-	console.log('Unbonding', amount, 'DOTs...');
-
-	const txid: string | any = await provider.zapBondage.unbond({ provider: oracle, endpoint, from: provider.providerOwner, dots: amount });
+			// Output response
+			if ( err ) reject(err);
+			else       resolve(data.returnValues.response);
+		});
+	});
 	
-	console.log('Transaction Info:', typeof txid == 'string' ? txid : txid.transactionHash);
-
-	bound = await provider.zapBondage.getBoundDots({ subscriber: provider.providerOwner, provider: oracle, endpoint});
-
-	console.log('You have', bound, 'DOTs bonded.');
-	const bal = await token.balanceOf(provider.providerOwner);
-	console.log('You have', bal, 'ZAP');
+	const res = await promise;
+	console.log('Response', res);
 }

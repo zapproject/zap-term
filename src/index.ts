@@ -1,6 +1,6 @@
-import { ask } from "./util";
-import { loadProvider, createProvider, createProviderCurve, getEndpointInfo, doBondage, doUnbondage } from "./provider";
-import { loadSubscriber, doQuery } from "./subscriber";
+import { ask, loadProvider, loadSubscriber, loadAccount } from "./util";
+import { createProvider, createProviderCurve, getEndpointInfo, doQuery } from "./provider";
+import { doBondage, doUnbondage } from "./subscriber";
 
 const HDWalletProvider = require("truffle-hdwallet-provider-privkey");
 const HDWalletProviderMem = require("truffle-hdwallet-provider");
@@ -22,8 +22,8 @@ async function main() {
 	const web3: any = new Web3(new HDWalletProviderMem(mnemonic, "wss://kovan.infura.io/_ws"));	 
 
 	// Get the provider and contracts
-	const { provider, contracts } = await loadProvider(web3);
-	const { subscriber,  } = await loadSubscriber(web3);
+	const provider = await loadProvider(web3, await loadAccount(web3));
+	const subscriber = await loadSubscriber(web3, await loadAccount(web3));
 
 	// If title hasn't been set bring them to the createProvider page
 	let title = await provider.getTitle();
@@ -33,7 +33,7 @@ async function main() {
 		console.log('Do you want to create a provider now?')
 
 		if ( (await ask('Create Provider [y/N]> ')) == 'y' ) {
-			await createProvider(provider);
+			await createProvider(web3);
 			title = await provider.getTitle();
 		}
 		else {
@@ -65,24 +65,24 @@ async function main() {
 		}
 		else if ( option == '1' ) {
 			if ( title == '' ) {
-				await createProvider(provider);
+				await createProvider(web3);
 				title = await provider.getTitle();
 			}
 			else {
-				await createProviderCurve(provider);
+				await createProviderCurve(web3);
 			}
 		}
 		else if ( option == '2' ) {
-			await getEndpointInfo(provider);
+			await getEndpointInfo(web3);
 		}
 		else if ( option == '3' ) {
-			await doBondage(provider, contracts.zapToken, contracts.zapBondage);
+			await doBondage(web3);
 		}
 		else if ( option == '4' ) {
-			await doUnbondage(provider, contracts.zapToken, contracts.zapBondage);
+			await doUnbondage(web3);
 		}
 		else if ( option == '5' ) {
-			await doQuery(subscriber);
+			await doQuery(web3);
 		}
 		else {
 			console.error('Unknown option', option);

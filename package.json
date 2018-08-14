@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "A terminal to interact with the Zap network",
   "main": "src/index.js",
+  "repository": "https://github.com/zapproject/zap-term.git",
   "scripts": {
     "build": "./node_modules/.bin/tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,20 +11,21 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@zapjs/arbiter": "^2.0.2",
-    "@zapjs/artifacts": "^2.0.2",
-    "@zapjs/bondage": "^2.0.2",
-    "@zapjs/dispatch": "^2.0.2",
-    "@zapjs/provider": "^2.0.2",
-    "@zapjs/registry": "^2.0.2",
-    "@zapjs/subscriber": "^2.0.2",
-    "@zapjs/zaptoken": "^2.0.2",
+    "@zapjs/arbiter": "^2.0.5",
+    "@zapjs/artifacts": "^2.0.4",
+    "@zapjs/bondage": "^2.0.7",
+    "@zapjs/dispatch": "^2.0.5",
+    "@zapjs/provider": "^2.0.5",
+    "@zapjs/registry": "^2.0.5",
+    "@zapjs/subscriber": "^2.0.5",
+    "@zapjs/types": "^2.0.4",
+    "@zapjs/zaptoken": "^2.0.5",
     "truffle-hdwallet-provider": "git+https://github.com/zapproject/truffle-hdwallet-provider.git",
     "truffle-hdwallet-provider-privkey": "^0.2.0",
     "web3": "^1.0.0-beta.35"
   },
   "devDependencies": {
-    "@types/node": "^10.5.8",
+    "@types/node": "^10.7.0",
     "typescript": "^2.9.2"
   }
 }

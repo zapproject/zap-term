@@ -2,8 +2,10 @@ import { ZapArbiter } from "@zapjs/arbiter";
 import { ZapBondage } from "@zapjs/bondage";
 import { ZapDispatch } from "@zapjs/dispatch";
 import { ZapRegistry } from "@zapjs/registry";
-import { ZapProvider } from "@zapjs/provider";
 import { ZapToken } from "@zapjs/zaptoken";
+
+import { ZapProvider } from "@zapjs/provider";
+import { ZapSubscriber } from "@zapjs/subscriber";
 
 import { join } from "path";
 import * as readline from "readline";
@@ -79,4 +81,52 @@ export async function loadAccount(web3: any): Promise<string> {
 	}
 
 	return accounts[0];
+}
+
+/**
+ * Loads a ZapProvider from a given Web3 instance
+ *
+ * @param web3 - Web3 instance to load from
+ * @returns ZapProvider instantiated
+ */
+export async function loadProvider(web3: any, owner: string): Promise<ZapProvider> {
+	const contracts = await loadContracts(web3);
+
+	const handler = {
+		handleIncoming: (data: string) => {
+			console.log('handleIncoming', data);
+		},
+		handleUnsubscription: (data: string) => {
+			console.log('handleUnsubscription', data);
+		},
+		handleSubscription: (data: string) => {
+			console.log('handleSubscription', data);
+		},
+	};
+
+	return new ZapProvider(owner, Object.assign(contracts, { handler }));
+}
+
+/**
+ * Loads a ZapProvider from a given Web3 instance
+ *
+ * @param web3 - Web3 instance to load from
+ * @returns ZapProvider instantiated
+ */
+export async function loadSubscriber(web3: any, owner: string): Promise<ZapSubscribe> {
+	const contracts = await loadContracts(web3);
+
+	const handler = {
+		handleIncoming: (data: string) => {
+			console.log('handleIncoming', data);
+		},
+		handleUnsubscription: (data: string) => {
+			console.log('handleUnsubscription', data);
+		},
+		handleSubscription: (data: string) => {
+			console.log('handleSubscription', data);
+		},
+	};
+
+	return new ZapSubscriber(owner, Object.assign(contracts, { handler }));
 }
