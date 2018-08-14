@@ -113,7 +113,7 @@ export async function loadProvider(web3: any, owner: string): Promise<ZapProvide
  * @param web3 - Web3 instance to load from
  * @returns ZapProvider instantiated
  */
-export async function loadSubscriber(web3: any, owner: string): Promise<ZapSubscribe> {
+export async function loadSubscriber(web3: any, owner: string): Promise<ZapSubscriber> {
 	const contracts = await loadContracts(web3);
 
 	const handler = {

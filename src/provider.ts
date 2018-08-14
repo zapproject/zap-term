@@ -3,7 +3,7 @@ import { ZapProvider } from "@zapjs/provider";
 import { ZapSubscriber } from "@zapjs/subscriber";
 import { txid, DEFAULT_GAS } from "@zapjs/types";
 
-import { sleep, loadContracts, loadAccount, ask, loadProvider, loadSubscriber } from "./util";
+import { loadContracts, loadAccount, ask, loadProvider, loadSubscriber } from "./util";
 import { createCurve, curveString } from "./curve";
 
 /**
