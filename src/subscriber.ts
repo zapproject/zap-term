@@ -37,7 +37,7 @@ export async function doBondage(web3: any) {
 	const dots: number = parseInt(await ask('DOTS> '));
 	const amount: BNType = web3.utils.toBN(await provider.getZapRequired({ endpoint, dots }));
 
-	console.log(`This will require ${amount.div(web3.utils.toBN('1000000000000000000')).toString()} ZAP. Bonding ${dots} DOTs...`);
+	console.log(`This will require ${amount.toString()} wei ZAP. Bonding ${dots} DOTs...`);
 
 	if ( !subscriber.hasEnoughZap(amount)  ) {
 		console.log('Balance insufficent.');
@@ -117,15 +117,18 @@ export async function listOracles(web3: any) {
 		const title = web3.utils.hexToUtf8(obj.returnValues.title);
 		const _endpoint = obj.returnValues.endpoint;
 
+		// Parse the curve
 		const _curve = await subscriber.zapRegistry.contract.methods.getProviderCurve(address, _endpoint).call();
 		const curve = curveString(_curve);
 
+		// Parse the endpoint. Attempt to convert it to an ascii string, if that fails fall back to the Buffer rep.
 		let endpoint: string | Buffer = Buffer.from(_endpoint.substring(2), 'hex');
 
 		try {
 			endpoint = endpoint.toString('utf8');
 		}
 		catch ( err ) {
+			endpoint = _endpoint;
 		}
 
 		return {

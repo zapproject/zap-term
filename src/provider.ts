@@ -152,12 +152,11 @@ export async function doQuery(web3: any): Promise<void> {
 
 	console.log('Querying provider...');
 	const txid: any = await subscriber.queryData({ provider: provider_address, query, endpoint, endpointParams, onchainProvider, onchainSubscriber, gas: DEFAULT_GAS.toNumber() });
-	const _id = txid.events['Incoming'].returnValues['id'];
 	console.log('Queried provider. Transaction Hash:', typeof txid == 'string' ? txid : txid.transactionHash);
 
-	const num = web3.utils.toBN(_id);
-	const id = '0x' + num.toString(16);
-	console.log('Query ID generate was', id);
+	const _id = txid.events['Incoming'].returnValues['id'];
+	const id = web3.utils.toBN(_id);
+	console.log('Query ID generate was', '0x' + id.toString(16));
 
 	// Create a promise to get response
 	const promise: Promise<any> = new Promise((resolve: any, reject: any) => {
@@ -165,7 +164,7 @@ export async function doQuery(web3: any): Promise<void> {
 		let fulfilled = false;
 		
 		// Get the off chain response
-		subscriber.listenToOffchainResponse({ id: web3.utils.toBN(id) }, (err: any, data: any) => {
+		subscriber.listenToOffchainResponse({ id }, (err: any, data: any) => {
 			// Only call once
 			if ( fulfilled ) return;
 			fulfilled = true;
