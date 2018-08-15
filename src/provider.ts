@@ -1,9 +1,9 @@
 import { Curve } from "@zapjs/curve";
 import { ZapProvider } from "@zapjs/provider";
 import { ZapSubscriber } from "@zapjs/subscriber";
-import { txid, DEFAULT_GAS } from "@zapjs/types";
+import { txid, DEFAULT_GAS, BNType } from "@zapjs/types";
 
-import { loadContracts, loadAccount, ask, loadProvider, loadSubscriber } from "./util";
+import { loadAccount, ask, loadProvider, loadSubscriber } from "./util";
 import { createCurve, curveString } from "./curve";
 
 /**
@@ -57,10 +57,15 @@ export async function createProviderCurve(web3: any): Promise<void> {
 		const provider = await loadProvider(web3, await loadAccount(web3));
 
 		const endpoint: string = await ask('Endpoint> ');
+
+		if ( endpoint.length == 0 ) {
+			return;
+		}
+
 		const curve: Curve = await createCurve();
 
 		console.log(curveString(curve.values));
-		await provider.initiateProviderCurve({ endpoint, gas: DEFAULT_GAS.toNumber(), term: curve.values, from: '' });
+		await provider.initiateProviderCurve({ endpoint, gas: DEFAULT_GAS.toNumber(), term: curve.values });
 
 		console.log('Created endpoint', endpoint);
 	}
@@ -78,13 +83,19 @@ export async function getEndpointInfo(web3: any): Promise<void> {
 	const user: string = await loadAccount(web3);
 
 	const oracle: string = await ask('Oracle (Address)> ');
+
+	if ( oracle.length == 0 ) {
+		return;
+	}
+
 	const endpoint: string = await ask('Endpoint> ');
 
 	const provider = await loadProvider(web3, oracle);
 
-	const bound: number = await provider.getBoundDots({ subscriber: user, endpoint });
+	const bound: string | BNType = await provider.getBoundDots({ subscriber: user, endpoint });
 	const curve = await provider.getCurve(endpoint);
-	const totalBound: number = await provider.getDotsIssued(endpoint);
+	const totalBound: string | BNType = await provider.getDotsIssued(endpoint);
+	const zapBound: string | BNType = await provider.getZapBound(endpoint);
 
 	if ( curve.values.length == 0 ) {
 		console.log('Unable to find the endpoint.');
@@ -92,8 +103,9 @@ export async function getEndpointInfo(web3: any): Promise<void> {
 	}
 
 	console.log('Curve:', curveString(curve.values));
-	console.log('Your DOTs Bound:', bound);
-	console.log('Total DOTs:', totalBound);
+	console.log('Your DOTs Bound:', bound.toString());
+	console.log('Total DOTs:', totalBound.toString());
+	console.log('Zap Bound:', zapBound.toString());
 }
 
 /**
@@ -109,9 +121,9 @@ export async function doQuery(web3: any): Promise<void> {
 	const endpoint: string = await ask('Endpoint> ');
 	const provider: ZapProvider = await loadProvider(web3, provider_address);
 
-	const bound: number = await provider.getBoundDots({ subscriber: user, endpoint});
+	const bound: BNType = web3.utils.toBN(await provider.getBoundDots({ subscriber: user, endpoint}));
 
-	if ( bound == 0 ) {
+	if ( bound.isZero() ) {
 		console.log('You do not have any bound dots to this provider');
 		return;
 	}
@@ -120,7 +132,7 @@ export async function doQuery(web3: any): Promise<void> {
 
 	const endpointParams: string[] = [];
 
-	console.log(`'Input your provider's endpoint paramaters. Enter a blank line to skip.'`)
+	console.log(`Input your provider's endpoint paramaters. Enter a blank line to skip.'`)
 
 	while ( true ) {
 		const endpointParam: string = await ask('Endpoint Params> ');
@@ -139,7 +151,7 @@ export async function doQuery(web3: any): Promise<void> {
 	const query: string = await ask('Query> ');
 
 	console.log('Querying provider...');
-	const txid: any = await subscriber.queryData({ provider, query, endpoint, endpointParams, onchainProvider, onchainSubscriber });
+	const txid: any = await subscriber.queryData({ provider: provider_address, query, endpoint, endpointParams, onchainProvider, onchainSubscriber, gas: DEFAULT_GAS.toNumber() });
 	const _id = txid.events['Incoming'].returnValues['id'];
 	console.log('Queried provider. Transaction Hash:', typeof txid == 'string' ? txid : txid.transactionHash);
 
@@ -153,7 +165,7 @@ export async function doQuery(web3: any): Promise<void> {
 		let fulfilled = false;
 		
 		// Get the off chain response
-		subscriber.listenOffchainResponse({ id }, (err: any, data: any) => {
+		subscriber.listenToOffchainResponse({ id: web3.utils.toBN(id) }, (err: any, data: any) => {
 			// Only call once
 			if ( fulfilled ) return;
 			fulfilled = true;

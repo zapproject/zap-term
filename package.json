@@ -8,18 +8,16 @@
     "build": "./node_modules/.bin/tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "zap-cli": "./src/index.js"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@zapjs/arbiter": "^2.0.5",
-    "@zapjs/artifacts": "^2.0.4",
-    "@zapjs/bondage": "^2.0.7",
-    "@zapjs/dispatch": "^2.0.5",
-    "@zapjs/provider": "^2.0.5",
-    "@zapjs/registry": "^2.0.5",
-    "@zapjs/subscriber": "^2.0.5",
-    "@zapjs/types": "^2.0.4",
-    "@zapjs/zaptoken": "^2.0.5",
+    "@zapjs/artifacts": "^2.0.10",
+    "@zapjs/provider": "^2.0.9",
+    "@zapjs/subscriber": "^2.0.8",
+    "@zapjs/types": "^2.0.6",
     "truffle-hdwallet-provider": "git+https://github.com/zapproject/truffle-hdwallet-provider.git",
     "truffle-hdwallet-provider-privkey": "^0.2.0",
     "web3": "^1.0.0-beta.35"

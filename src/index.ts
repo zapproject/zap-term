@@ -1,6 +1,6 @@
 import { ask, loadProvider, loadSubscriber, loadAccount } from "./util";
 import { createProvider, createProviderCurve, getEndpointInfo, doQuery } from "./provider";
-import { doBondage, doUnbondage } from "./subscriber";
+import { doBondage, doUnbondage, listOracles, viewInfo } from "./subscriber";
 
 const HDWalletProvider = require("truffle-hdwallet-provider-privkey");
 const HDWalletProviderMem = require("truffle-hdwallet-provider");
@@ -21,6 +21,8 @@ async function main() {
 	const mnemonic = await ask('Whats your mnemonic: ');
 	const web3: any = new Web3(new HDWalletProviderMem(mnemonic, "wss://kovan.infura.io/_ws"));	 
 
+	console.log('Using address', await loadAccount(web3));
+
 	// Get the provider and contracts
 	const provider = await loadProvider(web3, await loadAccount(web3));
 	const subscriber = await loadSubscriber(web3, await loadAccount(web3));
@@ -35,6 +37,7 @@ async function main() {
 		if ( (await ask('Create Provider [y/N]> ')) == 'y' ) {
 			await createProvider(web3);
 			title = await provider.getTitle();
+			console.log('');
 		}
 		else {
 			console.log('Not creating a provider now.');
@@ -46,6 +49,7 @@ async function main() {
 	while ( true ) {
 		console.log('What would you like to do? Type nothing to exit.');
 
+		console.log('0) My Info');
 		if ( title == '' ) {
 			console.log('1) Create provider');
 		}
@@ -56,12 +60,17 @@ async function main() {
 		console.log('3) Bond Zap');
 		console.log('4) Unbond Zap');
 		console.log('5) Query');
+		console.log('6) Responses');
+		console.log('7) List Oracles')
 
-		const option: string = await ask('Option> ');
+		const option: string = (await ask('Option> ')).trim();
 
 		if ( option == '' ) {
 			console.log('Good bye.');
 			process.exit(0);
+		}
+		else if ( option == '0' ) {
+			await viewInfo(web3);
 		}
 		else if ( option == '1' ) {
 			if ( title == '' ) {
@@ -83,6 +92,12 @@ async function main() {
 		}
 		else if ( option == '5' ) {
 			await doQuery(web3);
+		}
+		else if ( option == '6' ) {
+			console.log('Not yet implemented');
+		}
+		else if ( option == '7' ) {
+			await listOracles(web3);
 		}
 		else {
 			console.error('Unknown option', option);

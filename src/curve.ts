@@ -11,7 +11,13 @@ export async function createCurve(): Promise<Curve> {
 	const _curve: number[] = [];
 
 	while ( true ) {
-		const end: number = parseInt(await ask(`Curve starting at ${start} to> `));
+		const _end: string = await ask(`Curve starting at ${start} to> `);
+
+		if ( _end.length == 0 ) {
+			break;
+		}
+
+		const end: number = parseInt(_end);
 
 		if ( isNaN(end) ) {
 			console.error('Start and end must be numbers');
@@ -102,22 +108,37 @@ export async function createCurve(): Promise<Curve> {
  * @returns The stringified curve
  */
 export function curveString(curve: CurveType): string {
+	if ( curve.length == 0 ) {
+		return "Empty curve";
+	}
+
 	let output = "";
 
 	let start = 1;
 	let index = 0;
 
 	while ( index < curve.length ) {
-		const length = curve[index];
+		// 3 0 0 0 2 1000
+		const length = +curve[index];
 		const base = index + 1;
 		const poly = curve.slice(base, base + length);
-		const end = curve[base + length];
+		const end = +curve[base + length];
 
-		output += poly.map((x, i) => `${x}x^${i}`).join(" + ") + `on (${start} to ${end}]\n`;
+		output += poly.map((x, i) => {
+			if ( x == 0 ) {
+				return '';
+			}
+
+			switch ( i ) {
+				case 0:  return `${x}`;
+				case 1:  return `${x}x`;
+				default: return `${x}x^${i}`;
+			}
+		}).filter(x => x.length > 0).join(" + ") + ` on (${start} to ${end}]\n`;
 
 		index = base + length + 1;
+		start = end;
 	}
 
 	return output;
 }
-

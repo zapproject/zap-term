@@ -1,9 +1,3 @@
-import { ZapArbiter } from "@zapjs/arbiter";
-import { ZapBondage } from "@zapjs/bondage";
-import { ZapDispatch } from "@zapjs/dispatch";
-import { ZapRegistry } from "@zapjs/registry";
-import { ZapToken } from "@zapjs/zaptoken";
-
 import { ZapProvider } from "@zapjs/provider";
 import { ZapSubscriber } from "@zapjs/subscriber";
 
@@ -42,29 +36,6 @@ export function sleep(timeout: number): Promise<void> {
 }
 
 /**
- * Loads the contracts from a specially formatted file
- *
- * @param web3 - Web3 instance to be used
- * @param file - The file containing the artifacts directory and addresses
- * @returns The loaded objects in a JSON formatted instance
- */
-export async function loadContracts(web3: any): Promise<any> {
-	const options: any = {
-		artifactsDir: join(__dirname, '../', 'node_modules/@zapjs/artifacts/contracts/'),
-		networkId: await web3.eth.net.getId(),
-		networkProvider: web3.currentProvider,
-	};
-
-	return {
-		'zapArbiter': new ZapArbiter(options),
-		'zapBondage': new ZapBondage(options),
-		'zapDispatch': new ZapDispatch(options),
-		'zapRegistry': new ZapRegistry(options),
-		'zapToken': new ZapToken(options)
-	};
-}
-
-/**
  * Loads the first account from the current loaded provider in a web3 instance
  * 
  * @param web3 - Web3 instance to load accounts from
@@ -90,7 +61,11 @@ export async function loadAccount(web3: any): Promise<string> {
  * @returns ZapProvider instantiated
  */
 export async function loadProvider(web3: any, owner: string): Promise<ZapProvider> {
-	const contracts = await loadContracts(web3);
+	const contracts = {
+		artifactsDir: join(__dirname, '../', 'node_modules/@zapjs/artifacts/contracts/'),
+		networkId: (await web3.eth.net.getId()).toString(),
+		networkProvider: web3.currentProvider,
+	};
 
 	const handler = {
 		handleIncoming: (data: string) => {
@@ -114,7 +89,11 @@ export async function loadProvider(web3: any, owner: string): Promise<ZapProvide
  * @returns ZapProvider instantiated
  */
 export async function loadSubscriber(web3: any, owner: string): Promise<ZapSubscriber> {
-	const contracts = await loadContracts(web3);
+	const contracts = {
+		artifactsDir: join(__dirname, '../', 'node_modules/@zapjs/artifacts/contracts/'),
+		networkId: (await web3.eth.net.getId()).toString(),
+		networkProvider: web3.currentProvider,
+	};
 
 	const handler = {
 		handleIncoming: (data: string) => {
