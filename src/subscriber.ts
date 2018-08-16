@@ -44,7 +44,7 @@ export async function doBondage(web3: any) {
 		return;
 	}
 
-	console.log('Doing the bond...');
+	console.log('Bonding to the oracle...');
 
 	const bond_txid: string | any = await subscriber.bond({ provider: oracle, endpoint, dots });
 
@@ -111,7 +111,6 @@ export async function listOracles(web3: any) {
 
 
 	const providers: ZapProvider[] = await Promise.all(addresses.map(address => loadProvider(web3, address)));
-
 
 	// // Display each one
 	for ( const provider of providers ) {

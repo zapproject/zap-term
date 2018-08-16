@@ -202,10 +202,10 @@ export async function doResponses(web3: any) {
 
 		const data: any = await nextQuery();
 
-		console.log(`Query [${data.endpoint}]: ${data.query}`);
+		console.log(`Query [${web3.utils.hexToUtf8(data.endpoint)}]: ${data.query}`);
 
 		const res: string = await ask('Response> ');
-		const parts: string[] = res.match(/.{1,n}/g) || [];
+		const parts: string[] = (res.match(/.{1,32}/g) || []).map(web3.utils.utf8ToHex);
 
 		const tx: string | any = await provider.respond({
 			queryId: data.id,
@@ -213,6 +213,6 @@ export async function doResponses(web3: any) {
 			dynamic: true
 		});
 
-		console.log(`Transaction Hash: ${typeof tx == 'string' ? tx : tx.transactionHash}`);
+		console.log(`Transaction Hash: ${typeof tx == 'string' ? tx : tx.transactionHash}\n`);
 	}
 }
