@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { ask, loadProvider, loadSubscriber, loadAccount } from "./util";
 import { createProvider, createProviderCurve, getEndpointInfo, doQuery, doResponses } from "./provider";
 import { doBondage, doUnbondage, listOracles, viewInfo } from "./subscriber";

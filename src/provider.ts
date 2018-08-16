@@ -140,14 +140,10 @@ export async function doQuery(web3: any): Promise<void> {
 		endpointParams.push(endpointParam);
 	}
 
-	const onchainProvider: boolean = (await ask('Is the provider on chain [y/N]> ')) == 'y';
-	// Default this to false. We are off chain.
-	const onchainSubscriber: boolean = false;
-
 	const query: string = await ask('Query> ');
 
 	console.log('Querying provider...');
-	const txid: any = await subscriber.queryData({ provider: provider_address, query, endpoint, endpointParams, onchainProvider, onchainSubscriber, gas: DEFAULT_GAS.toNumber() });
+	const txid: any = await subscriber.queryData({ provider: provider_address, query, endpoint, endpointParams, gas: DEFAULT_GAS.toNumber() });
 	console.log('Queried provider. Transaction Hash:', typeof txid == 'string' ? txid : txid.transactionHash);
 
 	const _id = txid.events['Incoming'].returnValues['id'];
