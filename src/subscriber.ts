@@ -102,53 +102,26 @@ export async function listOracles(web3: any) {
 	const user: string = await loadAccount(web3);
 	const subscriber: ZapSubscriber = await loadSubscriber(web3, user);
 
-	const oracles = [];
+	const addresses: string[] = await subscriber.zapRegistry.getAllProviders();
 
-	// Get all NewProvider Events
-	const provider_events = await subscriber.zapRegistry.contract.getPastEvents('NewProvider', {
-		fromBlock: 0,
-		toBlock: 'latest',
-	});
-
-	// Parse them all. Printing not done here due to async
-	const providers: Array<any> = await Promise.all(provider_events.map(async (obj: any) => {
-		// Load data
-		const address = obj.returnValues.provider;
-		const title = web3.utils.hexToUtf8(obj.returnValues.title);
-		const _endpoint = obj.returnValues.endpoint;
-
-		// Parse the curve
-		const _curve = await subscriber.zapRegistry.contract.methods.getProviderCurve(address, _endpoint).call();
-		const curve = curveString(_curve);
-
-		// Parse the endpoint. Attempt to convert it to an ascii string, if that fails fall back to the Buffer rep.
-		let endpoint: string | Buffer = Buffer.from(_endpoint.substring(2), 'hex');
-
-		try {
-			endpoint = endpoint.toString('utf8');
-		}
-		catch ( err ) {
-			endpoint = _endpoint;
-		}
-
-		return {
-			endpoint,
-			address,
-			title,
-			curve
-		}
-	}));
-
-	if ( providers.length == 0 ) {
+	if ( addresses.length == 0 ) {
 		console.log(`Didn't find any providers`);
 		return;
 	}
 
-	// Display each one
+
+	const providers: ZapProvider[] = await Promise.all(addresses.map(address => loadProvider(web3, address)));
+
+
+	// // Display each one
 	for ( const provider of providers ) {
-		console.log(`Provider ${provider.title} / Endpoint ${provider.endpoint.toString()}`);
-		console.log(`Address: ${provider.address}`);
-		console.log(`Curve\n${provider.curve}\n`);
+		const endpoints = await provider.getEndpoints();
+
+		for ( const endpoint of endpoints ) {
+			console.log(`Provider ${await provider.getTitle()} / Endpoint ${endpoint}`);
+			console.log(`Address: ${provider.providerOwner}`);
+			console.log(`Curve\n${curveString((await provider.getCurve(endpoint)).values)}\n`);			
+		}
 	}
 }
 

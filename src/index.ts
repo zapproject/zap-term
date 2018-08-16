@@ -31,20 +31,11 @@ async function main() {
 	let title = await provider.getTitle();
 
 	if ( title.length == 0 ) {
-		console.warn('Failed to find your provider title, no provider instantiated');
-		console.log('Do you want to create a provider now?')
-
-		if ( (await ask('Create Provider [y/N]> ')) == 'y' ) {
-			await createProvider(web3);
-			title = await provider.getTitle();
-			console.log('');
-		}
-		else {
-			console.log('Not creating a provider now.');
-		}
+		console.log('Found provider:', title);
 	}
-
-	console.log('Found provider:', title);
+	else {
+		console.log('This account is currently not setup as a provider');
+	}
 
 	while ( true ) {
 		console.log('What would you like to do? Type nothing to exit.');
@@ -60,7 +51,14 @@ async function main() {
 		console.log('3) Bond Zap');
 		console.log('4) Unbond Zap');
 		console.log('5) Query');
-		console.log('6) Responses');
+
+		if ( title.length > 0 ) {
+			console.log('6) Respond to Queries');
+		}
+		else {
+			console.log('6) Respond to Queries (unavailable)')
+		}
+
 		console.log('7) List Oracles')
 
 		const option: string = (await ask('Option> ')).trim();
@@ -94,7 +92,12 @@ async function main() {
 			await doQuery(web3);
 		}
 		else if ( option == '6' ) {
-			await doResponses(web3);
+			if ( title.length > 0 ) {
+				await doResponses(web3);
+			}
+			else {
+				console.log('Unable to respond without setting up your provider first.');
+			}
 		}
 		else if ( option == '7' ) {
 			await listOracles(web3);

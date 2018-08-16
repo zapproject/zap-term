@@ -15,7 +15,8 @@
   "license": "ISC",
   "dependencies": {
     "@zapjs/artifacts": "^2.0.11",
-    "@zapjs/provider": "^2.0.9",
+    "@zapjs/provider": "^2.0.11",
+    "@zapjs/registry": "^2.0.11",
     "@zapjs/subscriber": "^2.0.8",
     "@zapjs/types": "^2.0.6",
     "truffle-hdwallet-provider": "git+https://github.com/zapproject/truffle-hdwallet-provider.git",

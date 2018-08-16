@@ -27,24 +27,10 @@ export async function createProvider(web3: any): Promise<void> {
 		return;
 	}
 
-	const endpoint = await ask('Endpoint> ');
-	const endpoint_params: string[] = [];
-
-	console.log('Give the params for the endpoint. Give an empty one to continue.');
-	while ( true ) {
-		const endpoint_param: string = await ask('Endpoint Param> ');
-
-		if ( endpoint_param.length == 0 ) {
-			break;
-		}
-
-		endpoint_params.push(endpoint_param);
-	}
-
 	console.log('Creating provider...');
 
 	const provider = await loadProvider(web3, await loadAccount(web3));
-	await provider.initiateProvider({ public_key, title, endpoint, endpoint_params });
+	await provider.initiateProvider({ public_key, title, gas: DEFAULT_GAS });
 }
 
 /**
@@ -65,7 +51,7 @@ export async function createProviderCurve(web3: any): Promise<void> {
 		const curve: Curve = await createCurve();
 
 		console.log(curveString(curve.values));
-		await provider.initiateProviderCurve({ endpoint, gas: DEFAULT_GAS.toNumber(), term: curve.values });
+		await provider.initiateProviderCurve({ endpoint, term: curve.values });
 
 		console.log('Created endpoint', endpoint);
 	}
@@ -118,7 +104,17 @@ export async function doQuery(web3: any): Promise<void> {
 	const subscriber: ZapSubscriber = await loadSubscriber(web3, user);
 
 	const provider_address: string = await ask('Provider Address> ');
+
+	if ( provider_address.length == 0 ) {
+		return;
+	}
+
 	const endpoint: string = await ask('Endpoint> ');
+
+	if ( endpoint.length == 0 ) {
+		return;
+	}
+
 	const provider: ZapProvider = await loadProvider(web3, provider_address);
 
 	const bound: BNType = web3.utils.toBN(await provider.getBoundDots({ subscriber: user, endpoint}));
@@ -206,7 +202,7 @@ export async function doResponses(web3: any) {
 
 		const data: any = await nextQuery();
 
-		console.log(`Query [${web3.utils.hexToUtf8(data.endpoint)}]: ${data.query}`);
+		console.log(`Query [${data.endpoint}]: ${data.query}`);
 
 		const res: string = await ask('Response> ');
 		const parts: string[] = res.match(/.{1,n}/g) || [];
