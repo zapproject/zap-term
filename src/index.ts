@@ -1,5 +1,5 @@
 import { ask, loadProvider, loadSubscriber, loadAccount } from "./util";
-import { createProvider, createProviderCurve, getEndpointInfo, doQuery } from "./provider";
+import { createProvider, createProviderCurve, getEndpointInfo, doQuery, doResponses } from "./provider";
 import { doBondage, doUnbondage, listOracles, viewInfo } from "./subscriber";
 
 const HDWalletProvider = require("truffle-hdwallet-provider-privkey");
@@ -94,7 +94,7 @@ async function main() {
 			await doQuery(web3);
 		}
 		else if ( option == '6' ) {
-			console.log('Not yet implemented');
+			await doResponses(web3);
 		}
 		else if ( option == '7' ) {
 			await listOracles(web3);

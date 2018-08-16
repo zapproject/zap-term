@@ -178,3 +178,45 @@ export async function doQuery(web3: any): Promise<void> {
 	const res = await promise;
 	console.log('Response', res);
 }
+
+export async function doResponses(web3: any) {
+	const address: string = await loadAccount(web3);
+	const provider: ZapProvider = await loadProvider(web3, address);
+
+	// Queries that need to be answered
+	const unanswered: any[] = [];
+
+	const nextQuery = () => {
+		return new Promise((resolve, reject) => {
+			let fulfilled = false;
+			provider.listenQueries({}, (err: any, data: any) => {
+				// Only call once
+				if ( fulfilled ) return;
+				fulfilled = true;
+
+				// Output response
+				if ( err ) reject(err);
+				else       resolve(data.returnValues);
+			});
+		});
+	};
+
+	while ( true ) {
+		console.log('Waiting for the next query...');
+
+		const data: any = await nextQuery();
+
+		console.log(`Query [${web3.utils.hexToUtf8(data.endpoint)}]: ${data.query}`);
+
+		const res: string = await ask('Response> ');
+		const parts: string[] = res.match(/.{1,n}/g) || [];
+
+		const tx: string | any = await provider.respond({
+			queryId: data.id,
+			responseParams: parts,
+			dynamic: true
+		});
+
+		console.log(`Transaction Hash: ${typeof tx == 'string' ? tx : tx.transactionHash}`);
+	}
+}

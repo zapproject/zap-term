@@ -139,6 +139,11 @@ export async function listOracles(web3: any) {
 		}
 	}));
 
+	if ( providers.length == 0 ) {
+		console.log(`Didn't find any providers`);
+		return;
+	}
+
 	// Display each one
 	for ( const provider of providers ) {
 		console.log(`Provider ${provider.title} / Endpoint ${provider.endpoint.toString()}`);

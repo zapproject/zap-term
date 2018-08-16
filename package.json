@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@zapjs/artifacts": "^2.0.10",
+    "@zapjs/artifacts": "^2.0.11",
     "@zapjs/provider": "^2.0.9",
     "@zapjs/subscriber": "^2.0.8",
     "@zapjs/types": "^2.0.6",
@@ -23,7 +23,7 @@
     "web3": "^1.0.0-beta.35"
   },
   "devDependencies": {
-    "@types/node": "^10.7.0",
+    "@types/node": "^10.7.1",
     "typescript": "^2.9.2"
   }
 }
