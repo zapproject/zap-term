@@ -131,8 +131,8 @@ export function curveString(curve: CurveType): string {
 
 			switch ( i ) {
 				case 0:  return `${x}`;
-				case 1:  return `${x}x`;
-				default: return `${x}x^${i}`;
+				case 1:  return `${x > 1 ? x : ''}x`;
+				default: return `${x > 1 ? x : ''}x^${i}`;
 			}
 		}).filter(x => x.length > 0).join(" + ") + ` on (${start} to ${end}]\n`;
 
