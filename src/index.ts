@@ -31,7 +31,7 @@ async function main() {
 	// If title hasn't been set bring them to the createProvider page
 	let title = await provider.getTitle();
 
-	if ( title.length == 0 ) {
+	if ( title.length > 0 ) {
 		console.log('Found provider:', title);
 	}
 	else {
