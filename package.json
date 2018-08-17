@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@zapjs/artifacts": "^2.0.11",
+    "@zapjs/artifacts": "^2.0.12",
     "@zapjs/dispatch": "^2.0.12",
     "@zapjs/provider": "^2.0.12",
     "@zapjs/registry": "^2.0.13",
