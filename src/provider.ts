@@ -22,10 +22,10 @@ export async function createProvider(web3: any): Promise<void> {
 
 	const public_key = await ask('Public Key (hex)> ');
 
-	if ( !public_key.startsWith('0x') ) {
-		console.log('Not creating provider now. Public key must be a hex string.');
-		return;
-	}
+	// if ( !public_key.startsWith('0x') ) {
+	// 	console.log('Not creating provider now. Public key must be a hex string.');
+	// 	return;
+	// }
 
 	console.log('Creating provider...');
 
