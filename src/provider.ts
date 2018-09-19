@@ -51,7 +51,8 @@ export async function createProviderCurve(web3: any): Promise<void> {
 		const curve: Curve = await createCurve();
 
 		console.log(curveString(curve.values));
-		await provider.initiateProviderCurve({ endpoint, term: curve.values });
+		// TODO: Add broker functionality
+		await provider.initiateProviderCurve({ endpoint, term: curve.values, broker: "0x0"});
 
 		console.log('Created endpoint', endpoint);
 	}
