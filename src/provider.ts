@@ -178,7 +178,7 @@ export async function doQuery(web3: any): Promise<void> {
 
 			// Output response
 			if ( err ) reject(err);
-			else       resolve(data.returnValues.response);
+			else       resolve(Object.values(data.returnValues).slice(Object.values(data.returnValues).length/2+3));
 		});
 	});
 

@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "repository": "https://github.com/zapproject/zap-term.git",
   "scripts": {
-    "build": "./node_modules/.bin/tsc",
+    "build": "./node_modules/.bin/tsc -t es2018",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
