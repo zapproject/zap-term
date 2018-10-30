@@ -19,8 +19,9 @@ async function main() {
 	}
 
 	// Load the mnemonic and web3 instance
-	const mnemonic = await ask('Whats your mnemonic: ');
-	const web3: any = new Web3(new HDWalletProviderMem(mnemonic, "wss://kovan.infura.io/_ws"));	 
+	const mnemonic = await ask('Whats your mnemonic (empty entry will use blank mnemonic): ');
+	const wallet = new HDWalletProviderMem(mnemonic,"wss://kovan.infura.io/_ws")
+	const web3: any = new Web3(new HDWalletProviderMem(mnemonic, "wss://kovan.infura.io/_ws"));
 
 	console.log('Using address', await loadAccount(web3));
 

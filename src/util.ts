@@ -60,7 +60,7 @@ export async function loadAccount(web3: any): Promise<string> {
  * @param web3 - Web3 instance to load from
  * @returns ZapProvider instantiated
  */
-export async function loadProvider(web3: any, owner: string): Promise<ZapProvider> {
+export async function loadProvider(web3: any, owner: string|any): Promise<ZapProvider> {
 	const contracts = {
 		artifactsDir: join(__dirname, '../', 'node_modules/@zapjs/artifacts/contracts/'),
 		networkId: (await web3.eth.net.getId()).toString(),

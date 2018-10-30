@@ -102,25 +102,30 @@ export async function listOracles(web3: any) {
 	const user: string = await loadAccount(web3);
 	const subscriber: ZapSubscriber = await loadSubscriber(web3, user);
 
-	const addresses: string[] = await subscriber.zapRegistry.getAllProviders();
+	const addresses: string[]|Object = await subscriber.zapRegistry.getAllProviders();
+	if(Array.isArray(addresses)) {
+        if (addresses.length == 0) {
+            console.log(`Didn't find any providers`);
+            return;
+        }
 
-	if ( addresses.length == 0 ) {
-		console.log(`Didn't find any providers`);
+
+        const providers: ZapProvider[] = await Promise.all(addresses.map(address => loadProvider(web3, address)));
+
+        // // Display each one
+        for (const provider of providers) {
+            const endpoints = await provider.getEndpoints();
+
+            for (const endpoint of endpoints) {
+                console.log(`Provider ${await provider.getTitle()} / Endpoint ${endpoint}`);
+                console.log(`Address: ${provider.providerOwner}`);
+                console.log(`Curve\n${curveString((await provider.getCurve(endpoint)).values)}\n`);
+            }
+        }
+    }
+    else{
+    	console.error("Fail to retrieve providers, unknown type")
 		return;
-	}
-
-
-	const providers: ZapProvider[] = await Promise.all(addresses.map(address => loadProvider(web3, address)));
-
-	// // Display each one
-	for ( const provider of providers ) {
-		const endpoints = await provider.getEndpoints();
-
-		for ( const endpoint of endpoints ) {
-			console.log(`Provider ${await provider.getTitle()} / Endpoint ${endpoint}`);
-			console.log(`Address: ${provider.providerOwner}`);
-			console.log(`Curve\n${curveString((await provider.getCurve(endpoint)).values)}\n`);			
-		}
 	}
 }
 
