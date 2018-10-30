@@ -50,9 +50,24 @@ export async function createProviderCurve(web3: any): Promise<void> {
 
 		const curve: Curve = await createCurve();
 
-		console.log(curveString(curve.values));
-		await provider.initiateProviderCurve({ endpoint, term: curve.values });
 
+		// console.log(curveString(curve.values));
+		// await provider.initiateProviderCurve({ endpoint, term: curve.values, broker: "0x0"});
+
+		console.log(curveString(curve.values));
+		const endpoint_params: string[] = [];
+
+		console.log('Give the params for the endpoint. Give an empty one to continue.');
+		while ( true ) {
+			const endpoint_param: string = await ask('Endpoint Param> ');
+			if ( endpoint_param.length == 0 ) {
+				break;
+			}
+			endpoint_params.push(endpoint_param);
+		}
+		// TODO: Add broker functionality
+		await provider.zapRegistry.initiateProviderCurve({endpoint, term: curve.values, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000'), broker: "0x0" });
+		await provider.zapRegistry.setEndpointParams({endpoint, endpoint_params, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000')})
 		console.log('Created endpoint', endpoint);
 	}
 	catch(err) {
@@ -60,7 +75,7 @@ export async function createProviderCurve(web3: any): Promise<void> {
 	}
 }
 
-/** 
+/**
  * Get the information for an endpoint
  *
  * @param provier - Provider to use
@@ -96,7 +111,7 @@ export async function getEndpointInfo(web3: any): Promise<void> {
 
 /**
  * Do a query and receive the response as the bytes32 array.
- * 
+ *
  * @param subscriber The subscriber to do the query with
  */
 export async function doQuery(web3: any): Promise<void> {
@@ -154,7 +169,7 @@ export async function doQuery(web3: any): Promise<void> {
 	const promise: Promise<any> = new Promise((resolve: any, reject: any) => {
 		console.log('Waiting for response');
 		let fulfilled = false;
-		
+
 		// Get the off chain response
 		subscriber.listenToOffchainResponse({ id }, (err: any, data: any) => {
 			// Only call once
@@ -163,10 +178,10 @@ export async function doQuery(web3: any): Promise<void> {
 
 			// Output response
 			if ( err ) reject(err);
-			else       resolve(data.returnValues.response);
+			else       resolve(Object.values(data.returnValues).slice(Object.values(data.returnValues).length/2+3));
 		});
 	});
-	
+
 	const res = await promise;
 	console.log('Response', res);
 }

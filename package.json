@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "repository": "https://github.com/zapproject/zap-term.git",
   "scripts": {
-    "build": "./node_modules/.bin/tsc",
+    "build": "./node_modules/.bin/tsc -t es2018",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
@@ -14,18 +14,18 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@zapjs/artifacts": "^2.0.12",
-    "@zapjs/dispatch": "^2.0.12",
-    "@zapjs/provider": "^2.0.12",
-    "@zapjs/registry": "^2.0.13",
-    "@zapjs/subscriber": "^2.0.9",
+    "@zapjs/artifacts": "^2.0.15",
+    "@zapjs/dispatch": "^2.0.13",
+    "@zapjs/provider": "^2.0.14",
+    "@zapjs/registry": "^2.0.16",
+    "@zapjs/subscriber": "^2.0.10",
     "@zapjs/types": "^2.0.6",
     "truffle-hdwallet-provider": "git+https://github.com/zapproject/truffle-hdwallet-provider.git",
     "truffle-hdwallet-provider-privkey": "^0.2.0",
-    "web3": "^1.0.0-beta.35"
+    "web3": "1.0.0-beta.35"
   },
   "devDependencies": {
-    "@types/node": "^10.7.1",
+    "@types/node": "^10.10.1",
     "typescript": "^2.9.2"
   }
 }
