@@ -2,6 +2,7 @@ import { Curve } from "@zapjs/curve";
 import { ZapProvider } from "@zapjs/provider";
 import { ZapSubscriber } from "@zapjs/subscriber";
 import { txid, DEFAULT_GAS, BNType } from "@zapjs/types";
+const NULL_ADDRESS= '0x0000000000000000000000000000000000000000';
 
 import { loadAccount, ask, loadProvider, loadSubscriber } from "./util";
 import { createCurve, curveString } from "./curve";
@@ -66,8 +67,8 @@ export async function createProviderCurve(web3: any): Promise<void> {
 			endpoint_params.push(endpoint_param);
 		}
 		// TODO: Add broker functionality
-		await provider.zapRegistry.initiateProviderCurve({endpoint, term: curve.values, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000'), broker: "0x0" });
-		await provider.zapRegistry.setEndpointParams({endpoint, endpoint_params, from: provider.providerOwner, gas: provider.zapArbiter.web3.utils.toBN('8000000')})
+		await provider.zapRegistry.initiateProviderCurve({endpoint, term: curve.values, from: provider.providerOwner, gas: 8000000, broker: NULL_ADDRESS });
+		await provider.zapRegistry.setEndpointParams({endpoint, endpoint_params, from: provider.providerOwner, gas: 8000000})
 		console.log('Created endpoint', endpoint);
 	}
 	catch(err) {
