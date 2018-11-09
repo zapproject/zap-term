@@ -7,7 +7,8 @@
   "scripts": {
     "build": "./node_modules/.bin/tsc -t es2018",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run": "node lib"
+    "cli": "node lib/inquirer",
+    "start" : "run-s build cli"
   },
   "bin": {
     "zap-term": "./src/index.js"
@@ -21,6 +22,8 @@
     "@zapjs/registry": "^2.0.16",
     "@zapjs/subscriber": "^2.0.10",
     "@zapjs/types": "^2.0.6",
+    "inquirer": "^6.2.0",
+    "npm-run-all": "^4.1.3",
     "truffle-hdwallet-provider": "git+https://github.com/zapproject/truffle-hdwallet-provider.git",
     "truffle-hdwallet-provider-privkey": "^0.2.0",
     "web3": "1.0.0-beta.35"
