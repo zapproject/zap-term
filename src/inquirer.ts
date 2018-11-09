@@ -1,15 +1,19 @@
+import {ZapRegistry} from "@zapjs/registry";
+
 const p  = require("inquirer");
 import {createProvider, createProviderCurve,doQuery,doResponses,getEndpointInfo}  from "./provider"
 import {doBondage,doUnbondage,listOracles,viewInfo} from "./subscriber"
 import {loadAccount,loadProvider,loadSubscriber,ask} from "./util";
 const HDWalletProviderMem = require("truffle-hdwallet-provider");
 const Web3 = require('web3');
-
+const emptyWallet = new Web3("wss://kovan.infura.io/_ws")
+let provider,subscriber;
+const registry = new ZapRegistry({networkId:42,networkProvider:emptyWallet})
 const providerChoices = ['Initiate Oracle','Initiate Endpoint','List Endpoints','Get Bound Dots','Get Bound Zap',
     'Get Endpoint Params','Set Endpoint Params','Get Params','Set Params','Respond To Query' ]
 const subscriberChoices =  [ 'Get Bound Dots','Get Bound Zap','Bond To Endpoint','Unbond To Endpoint',
     'Get Bound Zap/Dots','Query','Cancel Query' ]
-const generalChoices = [ 'Get my info','List Oracle','Get Oracle Info','Get Query Status','Calculate Required Zap' ]
+const generalChoices = [ 'Get my info','List Oracles','Get Oracle Info','Get Query Status','Calculate Required Zap' ]
 const templateChoices = [ 'Create Onchain Subscriber Bootstrap','Create Offchain Subcriber Bootstrap','Create  Oracle Template' ]
 const mainChoices = ["General","Provider","Subscriber","Exit"]
 const funcList :{[key:string]:any}= {
@@ -32,8 +36,8 @@ const funcList :{[key:string]:any}= {
     "Create Offchain Subcriber Bootstrap" :{args :["publicKey","name"],func :createProvider},
     "Create  Oracle Template" :{args :['web3'],func :viewInfo},
     "Get my info" :{args :['web3'],func :viewInfo},
-    "List Oracle" : {args :["publicKey","name"],func :createProvider},
-    "Get Oracle Info" : {args :["publicKey","name"],func :createProvider},
+    "List Oracles" : {args :[],func :[registry,'getAllProviders']},
+    "Get Oracle Info" : {args :["publicKey","name"],func :[provider,'']},
     "Get Query Status" : {args :["publicKey","name"],func :createProvider},
     "Calculate Required Zap" :{args :["publicKey","name"],func :createProvider},
     "General": {args: generalChoices, func: getChoice, choice: true},
@@ -44,14 +48,15 @@ const funcList :{[key:string]:any}= {
 }
 
 async function main(){
+    // console.log("registry : ", await registry.getAllProviders())
     //Load the mnemonic and web3 instance
     const mnemonic = await ask('Whats your mnemonic (empty entry will use blank mnemonic): ');
     const web3: any = new Web3(new HDWalletProviderMem(mnemonic, "wss://kovan.infura.io/_ws"));
     console.log('Using address', await loadAccount(web3));
 
     // Get the provider and contracts
-    const provider = await loadProvider(web3, await loadAccount(web3));
-    const subscriber = await loadSubscriber(web3, await loadAccount(web3));
+    provider = await loadProvider(web3, await loadAccount(web3));
+    subscriber = await loadSubscriber(web3, await loadAccount(web3));
     let res = await getChoice(mainChoices)
     let choice = res['res']
     await executeFunction(choice);
@@ -74,12 +79,22 @@ async function executeFunction(choice:string){
         executeFunction(res['res'])
     }
     else{
-        //prompt for more info
-        console.log("prompt for more info")
-        let answers = await getInput(args)
-        console.log(answers)
+        let answers,res
+        if(args.length>0) {
+            //prompt for more info
+            console.log("prompt for more info")
+            let answers = await getInput(args)
+            console.log(answers)
+            res = await func(Object.values(answers))
+        }else{
+            try {
+                res = await func[0][func[1]]()
+            }catch(e){console.error(e)}
+        }
+        console.log("result : ",res)
+
     }
-    // process.exit(0)
+     process.exit(0)
 }
 async function getInput(questions:string[]){
     let inqueries = []
