@@ -109,3 +109,26 @@ export async function loadSubscriber(web3: any, owner: string): Promise<ZapSubsc
 
 	return new ZapSubscriber(owner, Object.assign(contracts, { handler }));
 }
+
+/**
+ * View the info about a specific curve
+ * @param web3 - Web3 instance to use
+ */
+export async function viewInfo(web3: any) {
+    const account: string = await loadAccount(web3);
+    const subscriber: ZapSubscriber = await loadSubscriber(web3, account);
+    const provider: ZapProvider = await loadProvider(web3, account);
+
+    console.log(`Address: ${account}`);
+    try{
+        let title = await provider.getTitle();
+        if(!!!title) throw "not existed"
+        let pubkey = await provider.getPubkey()
+        let endpoints = await provider.getEndpoints()
+        console.log(`Provider is existed in Registry : \nTitle: ${title}, \nPublic Key : ${pubkey}\nEndpoints: ${endpoints}`)
+    }catch(e){
+        console.log("Provider is not existed with this account")
+    }
+    console.log(`ETH Balance: ${await web3.eth.getBalance(account)} wei`);
+    console.log(`ZAP Balance: ${await subscriber.getZapBalance()} wei ZAP`);
+}

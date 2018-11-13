@@ -134,10 +134,19 @@ export async function listOracles(web3: any) {
  * @param web3 - Web3 instance to use
  */
 export async function viewInfo(web3: any) {
-	const account: string = await loadAccount(web3);
-	const subscriber: ZapSubscriber = await loadSubscriber(web3, account);
+    const account: string = await loadAccount(web3);
+    const subscriber: ZapSubscriber = await loadSubscriber(web3, account);
+    const provider: ZapProvider = await loadProvider(web3, account);
 
-	console.log(`Address: ${account}`);
-	console.log(`ETH Balance: ${await web3.eth.getBalance(account)} wei`);	
-	console.log(`ZAP Balance: ${await subscriber.getZapBalance()} wei ZAP`);
+    console.log(`Address: ${account}`);
+    try{
+        let title = await provider.getTitle()
+        let pubkey = await provider.getPubkey()
+        let endpoints = await provider.getEndpoints()
+        console.log(`Provider is existed in Registry : \nTitle: ${title}, \nPublic Key : ${pubkey}\n Endpoints: ${endpoints}`)
+    }catch(e){
+        console.log("Provider is not existed with this account")
+    }
+    console.log(`ETH Balance: ${await web3.eth.getBalance(account)} wei`);
+    console.log(`ZAP Balance: ${await subscriber.getZapBalance()} wei ZAP`);
 }
