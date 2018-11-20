@@ -7,8 +7,8 @@
   "scripts": {
     "build": "./node_modules/.bin/tsc -t es2018",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "cli": "node lib/inquirer",
-    "start" : "run-s build cli"
+    "cli": "node lib/main",
+    "start": "run-s build cli"
   },
   "bin": {
     "zap-term": "./src/index.js"
@@ -17,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "@zapjs/artifacts": "^2.0.15",
+    "@zapjs/bondage": "^2.0.15",
     "@zapjs/dispatch": "^2.0.13",
     "@zapjs/provider": "^2.0.14",
     "@zapjs/registry": "^2.0.16",
