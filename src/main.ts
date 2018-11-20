@@ -11,49 +11,34 @@ import {NULL_ADDRESS} from "@zapjs/types";
 import {ProviderCli} from "./providerCli";
 import {SubscriberCli} from "./subscriberCli";
 import {CLI} from "./abstractCli";
+import {GeneralCli} from "./generalCli";
+import {TemplateCli} from "./templateCli";
 
 const HDWalletProviderMem = require("truffle-hdwallet-provider");
 const Web3 = require('web3');
-const emptyWallet = new Web3("wss://kovan.infura.io/_ws")
-
-const generalChoices = [ 'Get my info','List Oracles','Get Oracle Info','Get Query Status','Calculate Required Zap' ,"Get Bound Dots", "Get Bound Zaps"]
-const templateChoices = [ 'Create Onchain Subscriber Bootstrap','Create Offchain Subcriber Bootstrap','Create  Oracle Template' ]
-const mainChoices = ["General","I'm Provider","I'm Subscriber","create Template", "Exit"]
 
 export class Main extends CLI{
     funcList: { [key: string]: any }|undefined
-    provider : ZapProvider | undefined
-    subscriber : ZapSubscriber | undefined
-    providerCli: ProviderCli | undefined
-    subscriberCli : SubscriberCli | undefined;
-    providerChoices: string[]
-    subscriberChoices:string[]
-    constructor(){
+    clis : any
+    choices : any
+    mainMenu: string[]
+    constructor() {
         super()
-        this.provider = undefined;
-        this.subscriber = undefined;
-        this.providerCli = undefined;
-        this.subscriberCli = undefined;
-        this.providerChoices = []
-        this.subscriberChoices = []
+        this.clis = {}
+        this.choices = {}
+        this.mainMenu = []
     }
 
-    getFuncList(provider: ZapProvider, subscriber: ZapSubscriber, registry: ZapRegistry, dispatch: ZapDispatch, bondage: ZapBondage, web3: any) {
+
+    getMainList(generalChoices:string[],providerChoices:string[],subscriberChoices:string[],templateChoices:string[]) {
         this.list = {
-            "Create Onchain Subscriber Bootstrap": {args: ["publicKey", "name"], func: createProvider},
-            "Create Offchain Subcriber Bootstrap": {args: ["publicKey", "name"], func: createProvider},
-            "Create  Oracle Template": {args: ['web3'], func: [Util, 'viewInfo']},
-            "Get my info": {args: [{web3}], func: [Util, 'viewInfo']},
-            "List Oracles": {args: [], func: [registry, 'getAllProviders']},
-            "Get Oracle Info": {args: [{web3},"address"], func: [Util, 'getProviderInfo']},
-            "Get Query Status": {args: [{web3},"queryId"], func: [dispatch, 'getStatus']},
-            "Calculate Required Zap": {args: ["provider", "endpoint", "dots"], func: [bondage, 'calcZapForDots']},
             "General": {args: generalChoices, func: 'getChoice', choice: true},
-            "I'm Provider": {args: this.providerChoices, func: 'getChoice', choice: true},
-            "I'm Subscriber": {args: this.subscriberChoices, func: 'getChoice', choice: true},
-            "Create Template": {args: templateChoices, func: 'getChoice', choice: true},
-            "Exit": {args: process.exit, func: undefined}
+            "I'm Provider": {args: providerChoices, func: 'getChoice', choice: true},
+            "I'm Subscriber": {args: subscriberChoices, func: 'getChoice', choice: true},
+            // "Create Template": {args: templateChoices, func: 'getChoice', choice: true}
         }
+        this.mainMenu = Object.keys(this.list)
+        this.mainMenu.push(new p.Separator(),"Exit", new p.Separator())
     }
 
     async main() {
@@ -65,16 +50,29 @@ export class Main extends CLI{
         let registry = new ZapRegistry(options)
         let dispatch = new ZapDispatch(options)
         let bondage = new ZapBondage(options)
-        this.provider = await loadProvider(web3, await loadAccount(web3));
-        this.subscriber = await loadSubscriber(web3, await loadAccount(web3));
-        this.providerCli = new ProviderCli(web3,this.provider)
-        this.subscriberCli = new SubscriberCli(web3,this.subscriber,bondage)
-        this.providerChoices = Object.keys(this.providerCli.list)
-        this.subscriberChoices = Object.keys(this.subscriberCli.list)
-        this.getFuncList(this.provider, this.subscriber, registry, dispatch, bondage, web3)
-        this.list = Object.assign(this.list,this.providerCli.list,this.subscriberCli.list)
+        let provider = await loadProvider(web3, await loadAccount(web3));
+        let subscriber = await loadSubscriber(web3, await loadAccount(web3));
+        let providerCli = new ProviderCli(web3,provider)
+        let subscriberCli = new SubscriberCli(web3,subscriber,bondage)
+        let providerChoices = Object.keys(providerCli.list)
+        let subscriberChoices = Object.keys(subscriberCli.list)
+        let generalCli = new GeneralCli(web3,registry,bondage,dispatch)
+        let generalChoices = Object.keys(generalCli.list)
+        let templateCli = new TemplateCli(web3)
+        let templateChoices = Object.keys(templateCli)
+        this.getMainList(generalChoices,providerChoices,subscriberChoices,templateChoices)
+        this.list = Object.assign(this.list,providerCli.list,subscriberCli.list,generalCli.list)
+        this.clis = {provider:providerCli,subscriber:subscriberCli,general:generalCli}
+        this.choices = {provider:providerChoices,subscriber:subscriberChoices,general:generalChoices}
+        // console.log("------------------------\n ZAP-CLI TOOL\n------------------------")
+        console.log(" _____           \n" +
+            "|__  /__ _ _ __  \n" +
+            "  / // _` | '_ \\ \n" +
+            " / /| (_| | |_) |\n" +
+            "/____\\__,_| .__/ \n" +
+            "          |_| ")
         console.log(await Util.viewInfo({web3}))
-        await this.getMenu(mainChoices)
+        return await this.getMenu(this.mainMenu)
     }
 
     async getMenu(choices: string[]) {
@@ -83,59 +81,50 @@ export class Main extends CLI{
     }
 
     async execute(choice: string): Promise<void> {
-        if(!this.list) throw "No Menu found"
-        // if (!Object.keys(this.funcList).includes(choice)) {
-        //     console.log("invalid choice")
-        //     process.exit(1)
-        // }
-        let func = this.list[choice].func
-        let args = this.list[choice].args
-        let ch = this.list[choice].choice
-        if (!func) {
+        if (choice=="Exit") {
             console.log("Good bye")
             process.exit(0)
         }
+        if(choice=="Main Menu"){
+            return await this.getMenu(this.mainMenu)
+        }
+        if(!this.list) throw "No Menu found"
+        let func = this.list[choice].func
+        let args = this.list[choice].args
+        let ch = this.list[choice].choice
         if (!!ch) {
-            //this mean we are heading to another sub menu
+            //this mean we are heading to another sub men
+            args.push(new p.Separator(),"Main Menu","Exit", new p.Separator())
             let res = await this.getChoice(args)
             return this.execute(res)
         }
         else {
             //Getting arguments
             let res
-            if(this.providerChoices.includes(choice)){
-                if(!this.providerCli) throw "Starting provider cli failed"
-                else {
-                    try {
-                        res = await this.providerCli.execute(choice)
-                    }catch(e){
-                        console.error(e)
-                        await this.getMenu(mainChoices)
+            let subCli = false
+            for(let i in this.choices) {
+                subCli = true
+                if (this.choices[i].includes(choice)) {
+                    if (!this.clis[i]) throw "Starting sub cli failed"
+                    else {
+                        try {
+                            res = await this.clis[i].execute(choice)
+                        } catch (e) {
+                            console.error(e)
+                            return await this.getMenu(this.mainMenu)
+                        }
                     }
                 }
             }
-            else if(this.subscriberChoices.includes(choice)){
-                if(!this.subscriberCli) throw "Starting Subscriber Cli failed"
-                try{
-                    res = await this.subscriberCli.execute(choice)
-                }catch(e){
-                    console.error(e)
-                    await this.getMenu(mainChoices)
-                }
-            }
-            else {
+            if(!subCli) {
                 if (args.length > 0) {
                     //prompt for more info
-                    let ans: any = await this.getInput(args)
+                    let ans: any = await this.getInputs(args)
                     for (let i in ans) {
                         if (!Object.keys(ans[i]).length)
                             delete ans[i]
                     }
-                    let answers = ans
-                    // if (ans.length > 0) {
-                    //     answers = ans[0]
-                    // }
-                    res = await func[0][func[1]](...answers)
+                    res = await func[0][func[1]](...ans)
                 } else {
                     try {
                         res = await
@@ -149,7 +138,7 @@ export class Main extends CLI{
                 res = JSON.stringify(res)
             } catch (e) {}
             console.log(res ? "Result : " + res : '')
-            return this.getMenu(mainChoices)
+            return this.getMenu(this.mainMenu)
 
         }
         process.exit(0)

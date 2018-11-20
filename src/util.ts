@@ -104,7 +104,6 @@ export async function viewInfo({web3}: any) {
     const account: string = await loadAccount(web3);
     const subscriber: ZapSubscriber = await loadSubscriber(web3, account);
     const provider: ZapProvider = await loadProvider(web3, account);
-
     console.log(`Address: ${account}`);
     try{
         let title = await provider.getTitle();
@@ -120,6 +119,7 @@ export async function viewInfo({web3}: any) {
 }
 
 export async function getProviderInfo({web3}:any,{address}:any){
+    console.log(address)
     let provider = await loadProvider(web3, address);
     try{
         let EP:any={}
@@ -140,13 +140,9 @@ export async function getProviderInfo({web3}:any,{address}:any){
             \nPublic Key : ${pubkey}
             \nParams : ${params}
             \nEndpoints: ${endpoints}`)
-        if(endpoints.length>0){
             console.dir(EP,{depth:null})
-        }
     }catch(e){
         console.error(e)
         console.log("Provider is not existed with this account")
     }
-    // console.log(`ETH Balance: ${await web3.eth.getBalance(account)} wei`);
-    // console.log(`ZAP Balance: ${await .getZapBalance()} wei ZAP`);
 }

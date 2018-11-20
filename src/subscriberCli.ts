@@ -13,17 +13,45 @@ export class SubscriberCli extends CLI{
         this.subscriber = subscriber
         this.web3 = web3
         this.list = {
-            "Get Subscriber's Bound Dots": {args: ["provider"], func: [subscriber, 'getBoundDots']},
+            "Get Subscriber's Bound Dots": {args: [], func: [this, 'getBoundDots']},
             "Get Subscriber's Bound Zaps": {args: ["provider", "endpoint"], func: [bondage, 'getZapBound']},
-            "Bond To Endpoint": {args: ["provider", "endpoint", 'dots'], func: [subscriber, 'bond']},
-            "Unbond To Endpoint": {args: ["provider", "endpoint", "dots"], func: [subscriber, 'unBond']},
+            "Bond To Endpoint": {args: [], func: [this, 'bondToEndpoint']},
+            "Unbond To Endpoint": {args: [], func: [this, 'unbondToEndpoint']},
             "Query": {args: ["provider", "endpoint", "query", "endpointParams"], func: [subscriber, 'queryData']},
             "Cancel Query": {args: ["queryId"], func: [subscriber, "cancelQuery"]}
         }
     }
 
-    async bondToEndpoint({provider}:any){
+    async bondToEndpoint(){
+        let zapBalance = await this.subscriber.getZapBalance()
+        if(parseInt(zapBalance.toString())==0) throw "0 Zap Balance, please deposit Zap and continue"
+        let [provider,endpoint,providerObject] = await this.getProviderAndEndpoint()
+        let dots = await this.getInput("Amount of Dots to bond")
+        let requiredZap  = await providerObject.getZapRequired({endpoint,dots})
+        if(zapBalance<requiredZap) throw "Not enough Zap balance"
+        let bond = await this.subscriber.bond({provider,endpoint,dots})
+        return bond
+    }
+    async unbondToEndpoint(){
+        let [provider,endpoint] = await this.getProviderAndEndpoint()
+        let boundDots = await this.subscriber.getBoundDots({provider,endpoint})
+         if(boundDots==0){
+            throw `You have 0 dots bond to ${endpoint}`
+        }
+        console.log(typeof boundDots)
+        let dots = await this.getInput(`You have ${boundDots} bound dots\n
+        Enter amount of dots to unbond`)
+        if(parseInt(dots)==0){
+            throw "Cant unbond 0 dots"
+        }
+        let unbond = await this.subscriber.unBond({provider,endpoint,dots})
+        return unbond
+    }
 
+    async getBoundDots(){
+        let [provider,endpoint] = await this.getProviderAndEndpoint()
+        let boundDots = await this.subscriber.getBoundDots({provider,endpoint})
+        return boundDots
     }
 
 

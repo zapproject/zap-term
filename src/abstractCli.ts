@@ -1,17 +1,22 @@
-
+import {loadProvider} from "./util";
+let Web3 = require("web3")
 const p  = require("inquirer");
 
 export class CLI{
     list : {[key:string]:any}
+    web3:any
     constructor(){
         this.list = {}
+        this.web3 = new Web3()
     }
     async execute(choice:string){
         let funcs = this.list[choice].func
         let args =this.list[choice].args
         try {
-            return await funcs[0][funcs[1]](...args)
+            let answers = await this.getInputs(args)
+            return await funcs[0][funcs[1]](...answers)
         }catch(e){
+            console.error(e)
             return e
         }
     }
@@ -25,7 +30,7 @@ export class CLI{
         let response =  await p.prompt(promptList)
         return response['res']
     }
-    async getInput(questions: string[] | any[]) {
+    async getInputs(questions: string[] | any[]) {
         let inqueries = []
         let answers = []
         for (let q of questions) {
@@ -40,5 +45,20 @@ export class CLI{
         }
         answers.push(await p.prompt(inqueries))
         return answers
+    }
+    async getInput(q:string){
+        let inp = await p.prompt({
+            type:'input',
+            name:'res',
+            message : q
+        })
+        return inp['res']
+    }
+    async getProviderAndEndpoint(){
+        let providerAddress = await this.getInput("Provider Address")
+        let provider = await loadProvider(this.web3,providerAddress)
+        let endpoints = await provider.getEndpoints()
+        let e = await this.getChoice(endpoints)
+        return [providerAddress,e,provider]
     }
 }

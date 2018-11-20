@@ -1,3 +1,4 @@
+import {InitProvider} from "@zapjs/registry";
 
 const Util = require("./util")
 const p  = require("inquirer");
@@ -8,8 +9,6 @@ import {CLI} from "./abstractCli"
 
 export class ProviderCli extends CLI {
     provider : ZapProvider
-    web3: any
-    list : {[key:string]:any}
     constructor(web3:any,provider:ZapProvider) {
         super()
         this.provider = provider
@@ -33,12 +32,12 @@ export class ProviderCli extends CLI {
 
     async initProvider(args:any){
         let title = await this.provider.getTitle()
-        let inputs = await this.getInput(args);
+        let inputs:any = await this.getInputs(args);
         if(title && title != ''){
             throw "Provider is already initiated"
         }
         else{
-            return await this.provider.initiateProvider(args)
+            return await this.provider.initiateProvider(inputs)
         }
     }
 
