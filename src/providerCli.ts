@@ -1,5 +1,5 @@
 import {InitProvider} from "@zapjs/registry";
-
+const {hexToUtf8} = require("web3-utils");
 const Util = require("./util")
 const p  = require("inquirer");
 import {ZapProvider} from "@zapjs/provider";
@@ -21,8 +21,9 @@ export class ProviderCli extends CLI {
             "Get Provider's Bound Dots": {args: ["endpoint", "subscriber"], func: [provider, 'getBoundDots']},
             "Get Provider's Bound Zaps": {args: ["endpoint"], func: [provider, 'getZapBound']},
             "Get Endpoint Params": {args: [], func: [this, 'getEndpointParams']},
-            "Set Endpoint Params": {args: ["endpoint_params"], func: [this, 'setEndpointParams']},
-            "Get Params": {args: [], func: [provider, 'getAllProviderParams']},
+            "Set Endpoint Params": {args: [], func: [this, 'setEndpointParams']},
+            "Get Params": {args: [], func: [this, 'getAllProviderParams']},
+            "Get Param": {args: [], func: [this, 'getProviderParam']},
             "Set Params": {args: ["key", "value"], func: [provider, 'setProviderParameter']},
             "Respond To Query": {args: ['queryId', "responseParams", "dynamic"], func: [provider, 'respond']},
             "Listen to Queries": {args: [], func: [this, 'listenQueries']}
@@ -88,6 +89,21 @@ export class ProviderCli extends CLI {
         return setParams
     }
 
+    async getProviderParam(){
+        let key = await this.getInput("key")
+        let param = await this.provider.getProviderParam(key)
+        return hexToUtf8(param)
+    }
+    async getAllProviderParams(){
+        let keys = await this.provider.getAllProviderParams()
+        let providerParams :{[key:string]:string}= {}
+        for(let key of keys){
+            key = hexToUtf8(key)
+            let param = await this.provider.getProviderParam(key)
+            providerParams[key] = hexToUtf8(param)
+        }
+        return providerParams
+    }
     async listenQueries() {
         // Queries that need to be answered
         const unanswered: any[] = [];
