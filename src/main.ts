@@ -43,7 +43,8 @@ export class Main extends CLI{
 
     async main() {
         //Load the mnemonic and web3 instance
-        const mnemonic = "pact inside track layer hello carry used silver pyramid bronze drama time"//await ask('Whats your mnemonic (empty entry will use blank mnemonic): ');
+        // const mnemonic = "pact inside track layer hello carry used silver pyramid bronze drama time"
+        const mnemonic = await ask('Whats your mnemonic (empty entry will use blank mnemonic): ');
         const web3: any = new Web3(new HDWalletProviderMem(mnemonic, "wss://kovan.infura.io/_ws"));
         // Get the provider and zap packages
         let options = {networkId: (await web3.eth.net.getId()).toString(),networkProvider: web3.currentProvider}

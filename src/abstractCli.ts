@@ -54,6 +54,28 @@ export class CLI{
         })
         return inp['res']
     }
+
+    async getParamsInput(name : string, length?:number|undefined){
+        let params = []
+        let inp:string|any = ''
+        do {
+            if(length)
+                if(--length==0) {
+                    console.log("Maximum length is reached")
+                    break
+                }
+            inp = await p.prompt({
+                type:'input',
+                name:'res',
+                message : `${name} (empty to finish) : `
+            })
+            inp = inp['res']
+            if(inp!=''){
+                params.push(inp)
+            }
+        }while(inp!='')
+        return params
+    }
     async getProviderAndEndpoint(){
         let providerAddress = await this.getInput("Provider Address")
         let provider = await loadProvider(this.web3,providerAddress)

@@ -15,12 +15,19 @@ export class TemplateCli extends CLI {
         super()
         this.web3 = web3
         this.list = {
-            // "Create Onchain Subscriber Bootstrap": {args: ["publicKey", "name"], func: createProvider},
-            // "Create Offchain Subcriber Bootstrap": {args: ["publicKey", "name"], func: createProvider},
-            // "Create  Oracle Template": {args: ['web3'], func: [Util, 'viewInfo']},
+            "Create Onchain Subscriber Bootstrap": {args: ["publicKey", "name"], func: createProvider},
+            "Create Offchain Subcriber Bootstrap": {args: ["publicKey", "name"], func: createProvider},
+            "Create  Oracle Template": {args: ['web3'], func: [Util, 'viewInfo']},
         }
     }
 
+    async bootstrapOracleTemplate(){
+
+    }
+
+    async bootstrapOnchainSubscriber(){
+
+    }
 
 
 

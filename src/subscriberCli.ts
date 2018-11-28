@@ -17,11 +17,19 @@ export class SubscriberCli extends CLI{
             "Get Subscriber's Bound Zaps": {args: ["provider", "endpoint"], func: [bondage, 'getZapBound']},
             "Bond To Endpoint": {args: [], func: [this, 'bondToEndpoint']},
             "Unbond To Endpoint": {args: [], func: [this, 'unbondToEndpoint']},
-            "Query": {args: ["provider", "endpoint", "query", "endpointParams"], func: [subscriber, 'queryData']},
+            "Query": {args: [], func: [this, 'query']},
             "Cancel Query": {args: ["queryId"], func: [subscriber, "cancelQuery"]}
         }
     }
 
+    async query(){
+        let [provider,endpoint] = await this.getProviderAndEndpoint()
+        let query = await this.getInput("query")
+        let endpointParams = await this.getParamsInput("Param")
+        let tx = await this.subscriber.queryData({provider,query,endpoint,endpointParams})
+        return tx
+
+    }
     async bondToEndpoint(){
         let zapBalance = await this.subscriber.getZapBalance()
         if(parseInt(zapBalance.toString())==0) throw "0 Zap Balance, please deposit Zap and continue"

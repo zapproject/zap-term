@@ -25,11 +25,43 @@ export class ProviderCli extends CLI {
             "Get Params": {args: [], func: [this, 'getAllProviderParams']},
             "Get Param": {args: [], func: [this, 'getProviderParam']},
             "Set Params": {args: ["key", "value"], func: [provider, 'setProviderParameter']},
-            "Respond To Query": {args: ['queryId', "responseParams", "dynamic"], func: [provider, 'respond']},
+            "Respond To Query": {args: [], func: [this, 'respondToQuery']},
             "Listen to Queries": {args: [], func: [this, 'listenQueries']}
         }
     }
 
+    async respondToQuery(){
+        let queryId = await this.getInput("Query Id")
+        let dynamic = false
+        let responseParams = []
+        let choice = await this.getChoice([
+            'Dynamic (Any length, any type)',
+            'Int Array',
+            'String Array (up to 4)'
+        ])
+        switch(choice) {
+            case 'Dynamic (Any length, any type)':
+                dynamic = true
+                responseParams = await this.getParamsInput("Response Param")
+                break;
+            case "Int Array":
+                dynamic = true
+                responseParams = await this.getParamsInput("Int Reponse")
+                responseParams = responseParams.map(i=>{return parseInt(i)})
+                break;
+            case 'String Array (up to 4)':
+                dynamic = false
+                responseParams = await this.getParamsInput("String Param")
+                break;
+            default:
+                break
+        }
+        console.log("response : ", queryId,responseParams,dynamic)
+        let response = await this.provider.respond({queryId,responseParams,dynamic})
+        return response
+
+
+    }
 
     async initProvider(args:any){
         let title = await this.provider.getTitle()
@@ -71,19 +103,7 @@ export class ProviderCli extends CLI {
     async setEndpointParams(){
         let endpoints = await this.provider.getEndpoints()
         let e = await this.getChoice(endpoints)
-        let params = []
-        let inp:string|any = ''
-        do {
-            inp = await p.prompt({
-                type:'input',
-                name:'res',
-                message : 'Param (empty to finish) : '
-            })
-            inp = inp['res']
-            if(inp!=''){
-                params.push(inp)
-            }
-        }while(inp!='')
+        let params = await this.getParamsInput("Endpoint Param")
         let args = {endpoint:e,endpoint_params:params}
         let setParams = await this.provider.setEndpointParams(args)
         return setParams
