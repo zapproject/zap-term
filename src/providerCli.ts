@@ -1,12 +1,15 @@
-import {InitProvider} from "@zapjs/registry";
 const {hexToUtf8} = require("web3-utils");
 const Util = require("./util")
 const p  = require("inquirer");
 import {ZapProvider} from "@zapjs/provider";
-import {ask, loadAccount, loadProvider, loadSubscriber} from "./util";
+import {ask} from "./util";
 import {NULL_ADDRESS} from "@zapjs/types";
 import {CLI} from "./abstractCli"
-
+const IPFS = require("ipfs-mini")
+const ipfs = new IPFS({host:'ipfs.infura.io',port:5001,protocol:'https'})
+const IPFS_GATEWAY = "https://gateway.ipfs.io/ipfs/"
+const fs = require("fs")
+const path = require("path")
 export class ProviderCli extends CLI {
     provider : ZapProvider
     constructor(web3:any,provider:ZapProvider) {
@@ -25,6 +28,8 @@ export class ProviderCli extends CLI {
             "Get Params": {args: [], func: [this, 'getAllProviderParams']},
             "Get Param": {args: [], func: [this, 'getProviderParam']},
             "Set Params": {args: ["key", "value"], func: [provider, 'setProviderParameter']},
+            "Save endpoint to ipfs":{args:[],func:[this,"saveEndpointIpfs"]},
+            "Save .md file to ipfs": {args:[],func: [this,"saveMDfileToipfs"]},
             "Respond To Query": {args: [], func: [this, 'respondToQuery']},
             "Listen to Queries": {args: [], func: [this, 'listenQueries']}
         }
@@ -108,6 +113,60 @@ export class ProviderCli extends CLI {
         let setParams = await this.provider.setEndpointParams(args)
         return setParams
     }
+    async saveEndpointIpfs(){
+        try {
+            let endpoints = await this.provider.getEndpoints()
+            let endpoint = await this.getChoice(endpoints)
+            let params = await this.provider.getEndpointParams(endpoint)
+            let ipfs_info: any = {}
+            ipfs_info.name = endpoint
+            ipfs_info.curve = await this.provider.getCurve(endpoint)
+            ipfs_info.broker = await this.provider.getEndpointBroker(endpoint)
+            ipfs_info.params = params
+            // console.log("ipfs info : ", ipfs_info)
+            let hash = await this.saveToIPFS(JSON.stringify(ipfs_info))
+            console.log("saved ipfs ", hash)
+            console.log("Ipfs link is created, saving to provider's param")
+            //save to provider's param
+            let txid = await this.provider.setProviderParameter({key: endpoint, value: IPFS_GATEWAY + hash})
+            return `Saved ipfs link to provider's param, txid : ${JSON.stringify(txid)}\n Check out at ${IPFS_GATEWAY + hash}`
+        }catch(e){
+            return e
+        }
+    }
+
+    async saveToIPFS(data:string){
+        return new Promise((resolve,reject)=>{
+            const ipfs = new IPFS({host:'ipfs.infura.io',port:5001,protocol:'https'})
+            ipfs.add(data,(err:any,res:any)=>{
+                if(err) reject(err)
+                else resolve(res)
+            })
+        })
+    }
+    async saveMDfileToipfs(){
+        let endpoints = await this.provider.getEndpoints()
+        let endpoint  = await this.getChoice(endpoints)
+        let files = await fs.readdirSync(path.join(__dirname,"../md"))
+        if(files.length==0){
+            return `Cant find ${endpoint}.md file to load, make sure you include it in md folder`
+        }
+        for(let file of files){
+            if(file == `${endpoint}.md`){
+                console.log(`saving file ${file}`)
+                let content = await fs.readFileSync(path.join(__dirname,"../md",file))
+                console.log(content.toString())
+                let hash = await this.saveToIPFS(content.toString())
+                console.log(`Saved content to ipfs ${hash}, saving link to provider's param...`)
+                let txid = await this.provider.setProviderParameter({key:`${endpoint}.md`,value:IPFS_GATEWAY+hash})
+                console.log("Saved md link to provider param, check it out at : ",IPFS_GATEWAY+hash)
+                return txid
+            }
+        }
+        return endpoint
+
+    }
+
 
     async getProviderParam(){
         let key = await this.getInput("key")
