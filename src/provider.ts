@@ -94,7 +94,7 @@ export async function getEndpointInfo(web3: any): Promise<void> {
 
 	const provider = await loadProvider(web3, oracle);
 
-	const bound: string | BNType = await provider.getBoundDots({ subscriber: user, endpoint });
+	const bound: string | BNType |number = await provider.getBoundDots({ subscriber: user, endpoint });
 	const curve = await provider.getCurve(endpoint);
 	const totalBound: string | BNType = await provider.getDotsIssued(endpoint);
 	const zapBound: string | BNType = await provider.getZapBound(endpoint);
@@ -228,3 +228,5 @@ export async function doResponses(web3: any) {
 		console.log(`Transaction Hash: ${typeof tx == 'string' ? tx : tx.transactionHash}\n`);
 	}
 }
+
+

@@ -62,24 +62,10 @@ export async function loadAccount(web3: any): Promise<string> {
  */
 export async function loadProvider(web3: any, owner: string|any): Promise<ZapProvider> {
 	const contracts = {
-		artifactsDir: join(__dirname, '../', 'node_modules/@zapjs/artifacts/contracts/'),
 		networkId: (await web3.eth.net.getId()).toString(),
 		networkProvider: web3.currentProvider,
 	};
-
-	const handler = {
-		handleIncoming: (data: string) => {
-			console.log('handleIncoming', data);
-		},
-		handleUnsubscription: (data: string) => {
-			console.log('handleUnsubscription', data);
-		},
-		handleSubscription: (data: string) => {
-			console.log('handleSubscription', data);
-		},
-	};
-
-	return new ZapProvider(owner, Object.assign(contracts, { handler }));
+	return new ZapProvider(owner, contracts);
 }
 
 /**
@@ -108,4 +94,55 @@ export async function loadSubscriber(web3: any, owner: string): Promise<ZapSubsc
 	};
 
 	return new ZapSubscriber(owner, Object.assign(contracts, { handler }));
+}
+
+/**
+ * View the info about a specific curve
+ * @param web3 - Web3 instance to use
+ */
+export async function viewInfo({web3}: any) {
+    const account: string = await loadAccount(web3);
+    const subscriber: ZapSubscriber = await loadSubscriber(web3, account);
+    const provider: ZapProvider = await loadProvider(web3, account);
+    console.log(`Address: ${account}`);
+    try{
+        let title = await provider.getTitle();
+        if(!!!title) throw "not existed"
+        let pubkey = await provider.getPubkey()
+        let endpoints = await provider.getEndpoints()
+        console.log(`Provider is existed in Registry : \nTitle: ${title}, \nPublic Key : ${pubkey}\nEndpoints: ${endpoints}`)
+    }catch(e){
+        console.log("Provider is not existed with this account")
+    }
+    console.log(`ETH Balance: ${await web3.eth.getBalance(account)} wei`);
+    console.log(`ZAP Balance: ${await subscriber.getZapBalance()} wei ZAP`);
+}
+
+export async function getProviderInfo({web3}:any,{address}:any){
+    console.log(address)
+    let provider = await loadProvider(web3, address);
+    try{
+        let EP:any={}
+        let title = await provider.getTitle();
+        if(!!!title) throw "not existed"
+        let pubkey = await provider.getPubkey()
+        let endpoints = await provider.getEndpoints()
+        let params = await provider.getAllProviderParams()
+        for(let e of endpoints) {
+            EP[e] = {}
+            EP[e]['Bonding Curve'] = await provider.getCurve(e)
+            EP[e]['ZapBound'] = await provider.getZapBound(e)
+            EP[e]['Params'] = await provider.getEndpointParams(e)
+        }
+        console.log(`Provider is existed in Registry : 
+            \nOwner: ${provider.providerOwner}
+            \nTitle: ${title}, 
+            \nPublic Key : ${pubkey}
+            \nParams : ${params}
+            \nEndpoints: ${endpoints}`)
+            console.dir(EP,{depth:null})
+    }catch(e){
+        console.error(e)
+        console.log("Provider is not existed with this account")
+    }
 }
