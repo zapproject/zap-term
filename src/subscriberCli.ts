@@ -27,7 +27,30 @@ export class SubscriberCli extends CLI{
         let query = await this.getInput("query")
         let endpointParams = await this.getParamsInput("Param")
         let tx = await this.subscriber.queryData({provider,query,endpoint,endpointParams})
-        return tx
+        const _id = tx.events['Incoming'].returnValues['id'];
+        const id = this.web3.utils.toBN(_id);
+        console.log('Query ID generate was', '0x' + id.toString(16));
+
+        // Create a promise to get response
+        const promise: Promise<any> = new Promise((resolve: any, reject: any) => {
+            console.log('Waiting for response');
+            let fulfilled = false;
+
+            // Get the off chain response
+            this.subscriber.listenToOffchainResponse({ id }, (err: any, data: any) => {
+                // Only call once
+                if ( fulfilled ) return;
+                fulfilled = true;
+
+                // Output response
+                if ( err ) reject(err);
+                else       resolve(Object.values(data.returnValues).slice(Object.values(data.returnValues).length/2+3));
+            });
+        });
+
+        const res = await promise;
+        console.log('Response', res);
+            return tx
 
     }
     async bondToEndpoint(){
