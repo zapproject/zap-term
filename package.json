@@ -1,5 +1,5 @@
 {
-  "name": "zap-cli",
+  "name": "zap-term",
   "version": "0.0.2",
   "description": "A terminal tool to interact with the Zap network",
   "main": "lib/main",
