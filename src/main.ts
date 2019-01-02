@@ -41,11 +41,22 @@ export class Main extends CLI{
         this.mainMenu.push(new p.Separator(),"Exit", new p.Separator())
     }
 
-    async main() {
+    async start({network,url}:{network?:number, url?:string}) {
         //Load the mnemonic and web3 instance
         // const mnemonic = "pact inside track layer hello carry used silver pyramid bronze drama time"
-        const mnemonic = await ask('Whats your mnemonic (empty entry will use blank mnemonic): ');
-        const web3: any = new Web3(new HDWalletProviderMem(mnemonic, "wss://kovan.infura.io/_ws"));
+        const mnemonic = await ask('Whats your mnemonic (empty entry will use blank mnemonic - not recommended): ');
+        let web3:any=undefined
+        if(!network)
+            network=1
+        if(network!=1){
+            if(!url)
+                url = "wss://kovan.infura.io/_ws"
+        }
+        else{
+            if(!url)
+                url = "wss://mainnet.infura.io/ws/v3/63dbbe242127449b9aeb061c6640ab95"
+        }
+        web3 = new Web3(new HDWalletProviderMem(mnemonic, url));
         // Get the provider and zap packages
         let options = {networkId: (await web3.eth.net.getId()).toString(),networkProvider: web3.currentProvider}
         let registry = new ZapRegistry(options)
@@ -148,7 +159,4 @@ export class Main extends CLI{
 
 
 }
-let cli = new Main()
-cli.main()
-    .then(console.log)
-    .catch(console.error)
+module.exports = new Main()

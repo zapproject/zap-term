@@ -169,7 +169,7 @@ export class ProviderCli extends CLI {
 
 
     async getProviderParam(){
-        let key = await this.getInput("key")
+        let key = await this.getInput("Key")
         let param = await this.provider.getProviderParam(key)
         return hexToUtf8(param)
     }
@@ -201,20 +201,48 @@ export class ProviderCli extends CLI {
                 });
             });
         };
-
-        while ( true ) {
+        let waiting = 'y'
+        while ( waiting.toLowerCase()=='y' ) {
+            let waiting = await this.getInput("Waiting for next queries ? y/n")
+            if(!["y","n"].includes(waiting.toLowerCase())){
+                console.log("valid inputs : y n ")
+                continue
+            }
+            if(waiting.toLowerCase()=="n"){
+                return "Done waiting for queries"
+            }
             console.log('Waiting for the next query...');
             const data: any = await nextQuery();
             console.log(`Query [${this.web3.utils.hexToUtf8(data.endpoint)}]: ${data.query}`);
-            const res: string = await ask('Response> ');
-            const tx: string | any = await this.provider.respond({
-                queryId: data.id,
-                responseParams: [res],
-                dynamic: true
-            });
-
-            return tx
+            let dynamic = false
+            let responseParams = []
+            let choice = await this.getChoice([
+                'Dynamic (Any length, any type)',
+                'Int Array',
+                'String Array (up to 4)'
+            ])
+            switch(choice) {
+                case 'Dynamic (Any length, any type)':
+                    dynamic = true
+                    responseParams = await this.getParamsInput("Response Param")
+                    break;
+                case "Int Array":
+                    dynamic = true
+                    responseParams = await this.getParamsInput("Int Reponse")
+                    responseParams = responseParams.map(i=>{return parseInt(i)})
+                    break;
+                case 'String Array (up to 4)':
+                    dynamic = false
+                    responseParams = await this.getParamsInput("String Param")
+                    break;
+                default:
+                    break
+            }
+            console.log("response : ", data.id,responseParams,dynamic)
+            this.provider.respond({queryId:data.id,responseParams,dynamic})
+            continue
         }
+        return "Done"
     }
 
 
