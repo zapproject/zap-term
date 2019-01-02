@@ -7,7 +7,12 @@ A Cli tool to interact with the Zap api.
 	$ yarn add zap-cli
 
 ## Running
-
+	- From Source:
+	```
+		- Modify src/index.ts as needed
+		yarn start
+	```
+	- From import
 	```
 		const zapCli = require("zap-cli")
 		zapCli.start({network:42,url:""})
