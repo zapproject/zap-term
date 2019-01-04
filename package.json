@@ -1,5 +1,5 @@
 {
-  "name": "zap-cli",
+  "name": "zap-term",
   "version": "0.0.2",
   "description": "A terminal tool to interact with the Zap network",
   "main": "lib/main",
@@ -7,7 +7,7 @@
   "scripts": {
     "build": "./node_modules/.bin/tsc -t es2018",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "cli": "node lib/main",
+    "cli": "node lib/index",
     "start": "run-s build cli"
   },
   "author": "",

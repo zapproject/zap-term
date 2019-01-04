@@ -159,4 +159,4 @@ export class Main extends CLI{
 
 
 }
-module.exports = new Main()
+export const Cli= new Main()
