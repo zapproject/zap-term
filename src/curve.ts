@@ -6,7 +6,7 @@ import { Curve, CurveType } from "@zapjs/curve";
  * Uses math.js to parse an equation and then processes that into the params
  * @returns The encoded params
  */
-export async function createCurve(): Promise<Curve> {
+export async function createCurve(): Promise<CurveType> {
 	let start = 1;
 	const _curve: number[] = [];
 
@@ -62,7 +62,7 @@ export async function createCurve(): Promise<Curve> {
 				else if ( token == '^' ) {
 					if ( i == tokens.length - 1 ) {
 						console.error('Must specify an exponent.');
-						error = true;						
+						error = true;
 
 						break;
 					}
@@ -99,10 +99,10 @@ export async function createCurve(): Promise<Curve> {
 		start = end + 1;
 	}
 
-	return new Curve(_curve);
+	return _curve;
 }
 
-/** 
+/**
  * Create a string representing a piecewise function
  * @param curve The curve to be stringified
  * @returns The stringified curve

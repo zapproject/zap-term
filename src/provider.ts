@@ -1,4 +1,4 @@
-import { Curve } from "@zapjs/curve";
+import { Curve ,CurveType} from "@zapjs/curve";
 import { ZapProvider } from "@zapjs/provider";
 import { ZapSubscriber } from "@zapjs/subscriber";
 import { txid, DEFAULT_GAS, BNType } from "@zapjs/types";
@@ -49,13 +49,13 @@ export async function createProviderCurve(web3: any): Promise<void> {
 			return;
 		}
 
-		const curve: Curve = await createCurve();
+		const curve: CurveType = await createCurve();
 
 
 		// console.log(curveString(curve.values));
 		// await provider.initiateProviderCurve({ endpoint, term: curve.values, broker: "0x0"});
 
-		console.log(curveString(curve.values));
+		console.log(curveString(curve));
 		const endpoint_params: string[] = [];
 
 		console.log('Give the params for the endpoint. Give an empty one to continue.');
@@ -67,7 +67,7 @@ export async function createProviderCurve(web3: any): Promise<void> {
 			endpoint_params.push(endpoint_param);
 		}
 		// TODO: Add broker functionality
-		await provider.zapRegistry.initiateProviderCurve({endpoint, term: curve.values, from: provider.providerOwner, gas: 8000000, broker: NULL_ADDRESS });
+		await provider.zapRegistry.initiateProviderCurve({endpoint, term: curve, from: provider.providerOwner, gas: 8000000, broker: NULL_ADDRESS });
 		await provider.zapRegistry.setEndpointParams({endpoint, endpoint_params, from: provider.providerOwner, gas: 8000000})
 		console.log('Created endpoint', endpoint);
 	}
@@ -228,5 +228,3 @@ export async function doResponses(web3: any) {
 		console.log(`Transaction Hash: ${typeof tx == 'string' ? tx : tx.transactionHash}\n`);
 	}
 }
-
-
