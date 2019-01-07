@@ -1,4 +1,4 @@
-const {hexToUtf8} = require("web3-utils");
+const {hexToUtf8,fromWei} = require("web3-utils");
 const Util = require("./util")
 const p  = require("inquirer");
 import {ZapProvider} from "@zapjs/provider";
@@ -114,7 +114,7 @@ export class ProviderCli extends CLI {
         const params = await this.provider.getEndpointParams(endpoint)
         const maxDots = await this.provider.getDotsLimit(endpoint)
         const issuedDots = await this.provider.getDotsIssued(endpoint)
-        console.log(`Curve : ${curve.values}\n Broker : ${broker}\n Params: ${params}\n Max Dots: ${maxDots}\n Zap Bound: ${zapBound}\n Dots Issued: ${issuedDots}`)
+        console.log(`Curve : ${curve.values}\n Broker : ${broker}\n Params: ${params}\n Max Dots: ${maxDots}\n Zap Bound: ${fromWei(zapBound)}\n Dots Issued: ${issuedDots}`);
 
     }
 
@@ -186,12 +186,12 @@ export class ProviderCli extends CLI {
 
     }
 
-
     async getProviderParam(){
         let key = await this.getInput("Key")
         let param = await this.provider.getProviderParam(key)
         return hexToUtf8(param)
     }
+    
     async getAllProviderParams(){
         let keys = await this.provider.getAllProviderParams()
         let providerParams :{[key:string]:string}= {}
@@ -202,6 +202,7 @@ export class ProviderCli extends CLI {
         }
         return providerParams
     }
+
     async listenQueries() {
         // Queries that need to be answered
         const unanswered: any[] = [];

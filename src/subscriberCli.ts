@@ -4,6 +4,7 @@ import {NULL_ADDRESS} from "@zapjs/types";
 import {ZapSubscriber} from "@zapjs/subscriber";
 import {ZapBondage} from "@zapjs/bondage"
 import {CLI} from "./abstractCli";
+const {fromWei} = require("web3-utils")
 export class SubscriberCli extends CLI{
     subscriber : ZapSubscriber
     web3: any
@@ -14,7 +15,7 @@ export class SubscriberCli extends CLI{
         this.web3 = web3
         this.list = {
             "Get Subscriber's Bound Dots": {args: [], func: [this, 'getBoundDots']},
-            "Get Subscriber's Bound Zaps": {args: ["provider", "endpoint"], func: [bondage, 'getZapBound']},
+            "Get Subscriber's Bound Zaps": {args: [], func: [this, 'getZapBound']},
             "Bond To Endpoint": {args: [], func: [this, 'bondToEndpoint']},
             "Unbond To Endpoint": {args: [], func: [this, 'unbondToEndpoint']},
             "Query": {args: [], func: [this, 'query']},
@@ -59,7 +60,11 @@ export class SubscriberCli extends CLI{
         let [provider,endpoint,providerObject] = await this.getProviderAndEndpoint()
         let dots = await this.getInput("Amount of Dots to bond")
         let requiredZap  = await providerObject.getZapRequired({endpoint,dots})
-        if(zapBalance<requiredZap) throw "Not enough Zap balance"
+        const allow = await this.getInput(`Will cost ${fromWei(requiredZap)} ZAP, continue ? (y/n)`);
+        if(!allow || allow == '' || allow.toLowerCase()=='n'){
+            return "Abort Bonding"
+        }
+        if(zapBalance<requiredZap) throw `Not enough Zap balance, require ${fromWei(requiredZap)} Zap`
         let bond = await this.subscriber.bond({provider,endpoint,dots})
         return bond
     }
@@ -85,6 +90,11 @@ export class SubscriberCli extends CLI{
         return boundDots
     }
 
+    async getZapBound(){
+        let [provider,endpoint] = await this.getProviderAndEndpoint()
+        let boundZap = await this.subscriber.zapBondage.getZapBound({provider,endpoint})
+        return fromWei(boundZap)
+    }
 
 
 }
