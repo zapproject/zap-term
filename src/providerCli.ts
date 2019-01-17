@@ -20,7 +20,9 @@ export class ProviderCli extends CLI {
         this.list = {
             "Get Current Provider's Info" : {args:[{web3},{address:this.provider.providerOwner}], func: [Util,"getProviderInfo"]},
             "Create Oracle": {args: ["public_key", "title"], func: [this,'initProvider']},
+            "Set Title" :{args:[],func:[this,"setTitle"]},
             "Initiate Endpoint": {args: [], func: [this, 'initProviderCurve']},
+            "Clear Endpoint" :{args:[],func:[this,"clearEndpoint"]},
             "List Endpoints": {args: [], func: [this.provider, 'getEndpoints']},
             "Get Endpoint's Info" : {args:[], func: [this,"getEndpointInfo"]},
             "Get Provider's Bound Dots": {args: ["endpoint", "subscriber"], func: [provider, 'getBoundDots']},
@@ -36,6 +38,18 @@ export class ProviderCli extends CLI {
             "Listen to Queries": {args: [], func: [this, 'listenQueries']}
         }
     }
+
+
+    async setTitle(){
+        const currentTitle = await this.provider.getTitle()
+        if(!currentTitle || currentTitle==''){
+            return "Provider is not initiated, cant set title"
+        }
+        const title = await this.getInput("Title")
+        let txid = await this.provider.setTitle({title})
+        return txid
+    }
+
 
     async respondToQuery(){
         let queryId = await this.getInput("Query Id")
@@ -118,6 +132,13 @@ export class ProviderCli extends CLI {
 
     }
 
+    async clearEndpoint(){
+        const endpoints = await this.provider.getEndpoints()
+        const endpoint = await this.getChoice(endpoints)
+        const txid = await this.provider.clearEndpoint({endpoint})
+        return txid
+    }
+
     async getEndpointParams(){
         let endpoints = await this.provider.getEndpoints()
         let e = await this.getChoice(endpoints)
@@ -191,7 +212,7 @@ export class ProviderCli extends CLI {
         let param = await this.provider.getProviderParam(key)
         return hexToUtf8(param)
     }
-    
+
     async getAllProviderParams(){
         let keys = await this.provider.getAllProviderParams()
         let providerParams :{[key:string]:string}= {}
