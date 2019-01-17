@@ -1,8 +1,9 @@
-const {hexToUtf8} = require("web3-utils");
+const {hexToUtf8,fromWei} = require("web3-utils");
 const Util = require("./util")
 const p  = require("inquirer");
 import {ZapProvider} from "@zapjs/provider";
 import {ask} from "./util";
+import {createCurve} from "./curve"
 import {NULL_ADDRESS} from "@zapjs/types";
 import {CLI} from "./abstractCli"
 const IPFS = require("ipfs-mini")
@@ -19,8 +20,11 @@ export class ProviderCli extends CLI {
         this.list = {
             "Get Current Provider's Info" : {args:[{web3},{address:this.provider.providerOwner}], func: [Util,"getProviderInfo"]},
             "Create Oracle": {args: ["public_key", "title"], func: [this,'initProvider']},
-            "Initiate Endpoint": {args: ["endpoint", "term", "broker"], func: [this, 'initProviderCurve']},
+            "Set Title" :{args:[],func:[this,"setTitle"]},
+            "Initiate Endpoint": {args: [], func: [this, 'initProviderCurve']},
+            "Clear Endpoint" :{args:[],func:[this,"clearEndpoint"]},
             "List Endpoints": {args: [], func: [this.provider, 'getEndpoints']},
+            "Get Endpoint's Info" : {args:[], func: [this,"getEndpointInfo"]},
             "Get Provider's Bound Dots": {args: ["endpoint", "subscriber"], func: [provider, 'getBoundDots']},
             "Get Provider's Bound Zaps": {args: ["endpoint"], func: [provider, 'getZapBound']},
             "Get Endpoint Params": {args: [], func: [this, 'getEndpointParams']},
@@ -34,6 +38,18 @@ export class ProviderCli extends CLI {
             "Listen to Queries": {args: [], func: [this, 'listenQueries']}
         }
     }
+
+
+    async setTitle(){
+        const currentTitle = await this.provider.getTitle()
+        if(!currentTitle || currentTitle==''){
+            return "Provider is not initiated, cant set title"
+        }
+        const title = await this.getInput("Title")
+        let txid = await this.provider.setTitle({title})
+        return txid
+    }
+
 
     async respondToQuery(){
         let queryId = await this.getInput("Query Id")
@@ -57,7 +73,7 @@ export class ProviderCli extends CLI {
             case 'String Array (up to 4)':
                 dynamic = false
                 responseParams = await this.getParamsInput("String Param")
-                break;
+                break
             default:
                 break
         }
@@ -79,24 +95,48 @@ export class ProviderCli extends CLI {
         }
     }
 
-    async initProviderCurve(args:any):Promise<any>{
+    async initProviderCurve():Promise<any>{
+        let endpoint = await this.getInput("Endpoint")
         let endpoints = await this.provider.getEndpoints()
-        if(args['endpoint']==''){
-            throw "Invalid Endpoint"
+        if(endpoint == ''){
+            return "Invalid Endpoint"
         }
-        if(args['broker']==''){
-            args['broker']=NULL_ADDRESS
+        let broker = await this.getInput("Broker (empty for none)")
+        if(broker == ''){
+            broker=NULL_ADDRESS
         }
-        if(endpoints.includes(args['endpoint'])){
-            throw "Endpoint is already existed"
+        if(endpoints.includes(endpoint)){
+            return "Endpoint is already existed"
         }
         try
         {
-            args['term'] = JSON.parse(args['term'])
+            const curve = await createCurve()
+            console.log("curve created : ", curve)
+            return await this.provider.initiateProviderCurve({endpoint,term:curve,broker})
         }catch(e){
-            throw "Invalid term, please enter Array format , example: [1,1,100000]"
+            return "Error creating curve, please try again" + e
         }
-            return await this.provider.initiateProviderCurve(args)
+    }
+
+
+    async getEndpointInfo(){
+        const endpoints = await this.provider.getEndpoints()
+        const endpoint = await this.getChoice(endpoints)
+        const curve = await this.provider.getCurve(endpoint)
+        const broker = await this.provider.getEndpointBroker(endpoint)
+        const zapBound = await this.provider.getZapBound(endpoint)
+        const params = await this.provider.getEndpointParams(endpoint)
+        const maxDots = await this.provider.getDotsLimit(endpoint)
+        const issuedDots = await this.provider.getDotsIssued(endpoint)
+        console.log(`Curve : ${curve.values}\n Broker : ${broker}\n Params: ${params}\n Max Dots: ${maxDots}\n Zap Bound: ${fromWei(zapBound)}\n Dots Issued: ${issuedDots}`);
+
+    }
+
+    async clearEndpoint(){
+        const endpoints = await this.provider.getEndpoints()
+        const endpoint = await this.getChoice(endpoints)
+        const txid = await this.provider.clearEndpoint({endpoint})
+        return txid
     }
 
     async getEndpointParams(){
@@ -167,12 +207,12 @@ export class ProviderCli extends CLI {
 
     }
 
-
     async getProviderParam(){
-        let key = await this.getInput("key")
+        let key = await this.getInput("Key")
         let param = await this.provider.getProviderParam(key)
         return hexToUtf8(param)
     }
+
     async getAllProviderParams(){
         let keys = await this.provider.getAllProviderParams()
         let providerParams :{[key:string]:string}= {}
@@ -183,6 +223,7 @@ export class ProviderCli extends CLI {
         }
         return providerParams
     }
+
     async listenQueries() {
         // Queries that need to be answered
         const unanswered: any[] = [];
@@ -201,20 +242,48 @@ export class ProviderCli extends CLI {
                 });
             });
         };
-
-        while ( true ) {
+        let waiting = 'y'
+        while ( waiting.toLowerCase()=='y' ) {
+            let waiting = await this.getInput("Waiting for next queries ? y/n")
+            if(!["y","n"].includes(waiting.toLowerCase())){
+                console.log("valid inputs : y n ")
+                continue
+            }
+            if(waiting.toLowerCase()=="n"){
+                return "Done waiting for queries"
+            }
             console.log('Waiting for the next query...');
             const data: any = await nextQuery();
             console.log(`Query [${this.web3.utils.hexToUtf8(data.endpoint)}]: ${data.query}`);
-            const res: string = await ask('Response> ');
-            const tx: string | any = await this.provider.respond({
-                queryId: data.id,
-                responseParams: [res],
-                dynamic: true
-            });
-
-            return tx
+            let dynamic = false
+            let responseParams = []
+            let choice = await this.getChoice([
+                'Dynamic (Any length, any type)',
+                'Int Array',
+                'String Array (up to 4)'
+            ])
+            switch(choice) {
+                case 'Dynamic (Any length, any type)':
+                    dynamic = true
+                    responseParams = await this.getParamsInput("Response Param")
+                    break;
+                case "Int Array":
+                    dynamic = true
+                    responseParams = await this.getParamsInput("Int Reponse")
+                    responseParams = responseParams.map(i=>{return parseInt(i)})
+                    break;
+                case 'String Array (up to 4)':
+                    dynamic = false
+                    responseParams = await this.getParamsInput("String Param")
+                    break;
+                default:
+                    break
+            }
+            console.log("response : ", data.id,responseParams,dynamic)
+            this.provider.respond({queryId:data.id,responseParams,dynamic})
+            continue
         }
+        return "Done"
     }
 
 

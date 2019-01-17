@@ -1,6 +1,6 @@
 import { ZapProvider } from "@zapjs/provider";
 import { ZapSubscriber } from "@zapjs/subscriber";
-
+const {fromWei}  = require("web3-utils")
 import { join } from "path";
 import * as readline from "readline";
 
@@ -37,7 +37,7 @@ export function sleep(timeout: number): Promise<void> {
 
 /**
  * Loads the first account from the current loaded provider in a web3 instance
- * 
+ *
  * @param web3 - Web3 instance to load accounts from
  * @returns The first account found
  */
@@ -114,8 +114,8 @@ export async function viewInfo({web3}: any) {
     }catch(e){
         console.log("Provider is not existed with this account")
     }
-    console.log(`ETH Balance: ${await web3.eth.getBalance(account)} wei`);
-    console.log(`ZAP Balance: ${await subscriber.getZapBalance()} wei ZAP`);
+    console.log(`ETH Balance: ${fromWei(await web3.eth.getBalance(account))} ETH`);
+    console.log(`ZAP Balance: ${fromWei(await subscriber.getZapBalance())} ZAP`);
 }
 
 export async function getProviderInfo({web3}:any,{address}:any){
@@ -134,9 +134,9 @@ export async function getProviderInfo({web3}:any,{address}:any){
             EP[e]['ZapBound'] = await provider.getZapBound(e)
             EP[e]['Params'] = await provider.getEndpointParams(e)
         }
-        console.log(`Provider is existed in Registry : 
+        console.log(`Provider is existed in Registry :
             \nOwner: ${provider.providerOwner}
-            \nTitle: ${title}, 
+            \nTitle: ${title},
             \nPublic Key : ${pubkey}
             \nParams : ${params}
             \nEndpoints: ${endpoints}`)

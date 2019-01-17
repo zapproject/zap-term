@@ -1,27 +1,24 @@
 # zap-term
 
-A terminal interface to the Zap contracts.
+A Cli tool to interact with the Zap api.
 
 ## Installing
-	
-	$ yarn
-	$ yarn build
+
+	$ yarn add zap-term
 
 ## Running
-	
-	$ node lib
-## Usage
-- Commands : 
-```
-0) My Info
-1) Instantiate Bonding Curve
-2) Get Endpoint
-3) Bond Zap
-4) Unbond Zap
-5) Query
-6) Respond to Queries
-7) List Oracles
-```
+	- From Source:
+	```
+		- Modify src/index.ts as needed
+		yarn start
+	```
+	- From import
+	```
+		const zapCli = require("zap-term")
+		zapCli.start({network:42,url:""})
+	```
+	- `network` : optional, default = 1, available on mainnet (1) and kovan (42)
+	- `url` : optional, default = infura
 
-## Note: 
+## Note:
 - Empty mnemonic entered is not recommended, the blank mnemonic will be used in this case.
