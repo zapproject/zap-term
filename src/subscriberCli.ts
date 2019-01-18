@@ -4,7 +4,7 @@ import {NULL_ADDRESS} from "@zapjs/types";
 import {ZapSubscriber} from "@zapjs/subscriber";
 import {ZapBondage} from "@zapjs/bondage"
 import {CLI} from "./abstractCli";
-const {fromWei} = require("web3-utils")
+const {fromWei,utf8ToHex} = require("web3-utils")
 export class SubscriberCli extends CLI{
     subscriber : ZapSubscriber
     web3: any
@@ -19,7 +19,12 @@ export class SubscriberCli extends CLI{
             "Bond To Endpoint": {args: [], func: [this, 'bondToEndpoint']},
             "Unbond To Endpoint": {args: [], func: [this, 'unbondToEndpoint']},
             "Query": {args: [], func: [this, 'query']},
-            "Cancel Query": {args: ["queryId"], func: [subscriber, "cancelQuery"]}
+            "Cancel Query": {args: ["queryId"], func: [subscriber, "cancelQuery"]},
+            "Start Subscription": {args: [], func: [this, "startSubscription"]},
+            "End Subscription": {args:[], func: [this,"endSubscription"]},
+            "Get Subsciption" : {args: [], func: [this, "getSubscription"]},
+            "Get Starting Block" : {args: [], func: [this, "getBlockStart"]},
+            "Get Ending Block" : {args: [], func: [this, "getBlockEnd"]}
         }
     }
 
@@ -94,6 +99,40 @@ export class SubscriberCli extends CLI{
         let [provider,endpoint] = await this.getProviderAndEndpoint()
         let boundZap = await this.subscriber.zapBondage.getZapBound({provider,endpoint})
         return fromWei(boundZap)
+    }
+
+    async startSubscription(){
+        let [provider,endpoint] = await this.getProviderAndEndpoint()
+        let dots:number|string = await this.getInput("Number of blocks(dots) of subscription")
+        let endpointParams:string[] = []
+        let txid = await this.subscriber.subscribe({provider,endpoint,dots,endpointParams})
+        return txid
+    }
+
+    async endSubscription(){
+        let [provider,endpoint] = await this.getProviderAndEndpoint()
+        let boundDots = await this.subscriber.zapArbiter.getDots({subscriber:this.subscriber.subscriberOwner,provider,endpoint:utf8ToHex(endpoint)})
+        console.log("bound dots : ", boundDots)
+        if(parseInt(boundDots.toString())==0){
+            return "No active subscription"
+        }
+        let txid = await this.subscriber.zapArbiter.endSubscriptionSubscriber({provider,endpoint,from:this.subscriber.subscriberOwner})
+        return txid
+    }
+
+    async getSubscription(){
+        let [provider,endpoint] = await this.getProviderAndEndpoint()
+        return await this.subscriber.zapArbiter.getSubscription({provider,endpoint,subscriber:this.subscriber.subscriberOwner})
+    }
+
+    async getBlockStart(){
+        let [provider,endpoint] = await this.getProviderAndEndpoint()
+        return await this.subscriber.zapArbiter.getBlockStart({provider,endpoint,subscriber:this.subscriber.subscriberOwner})
+    }
+
+    async getBlockEnd(){
+        let [provider,endpoint] = await this.getProviderAndEndpoint()
+        return await this.subscriber.zapArbiter.getPreBlockEnd({provider,endpoint,subscriber:this.subscriber.subscriberOwner})
     }
 
 
