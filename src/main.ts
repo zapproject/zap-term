@@ -52,6 +52,7 @@ export class Main extends CLI{
         let mnemonic = await ask('Whats your mnemonic (empty to create new mnemonic): ');
         if(!mnemonic || mnemonic==''){
             mnemonic = bip39.generateMnemonic()
+            console.log("New Mnemonic : ", mnemonic)
         }
         let web3:any=undefined
         if(network==42){
