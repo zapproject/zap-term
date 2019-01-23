@@ -24,7 +24,7 @@ export async function createCurve(): Promise<CurveType> {
 			continue;
 		}
 
-		const curve: string = await ask('Curve> ');
+		const curve: string = await ask('Curve ( example : 1+x+2x^2 )> ');
 		const terms: string[] = curve.split('+').map(term => term.trim());
 
 		const current_curve: number[] = [];

@@ -13,6 +13,7 @@ import {SubscriberCli} from "./subscriberCli";
 import {CLI} from "./abstractCli";
 import {GeneralCli} from "./generalCli";
 import {TemplateCli} from "./templateCli";
+const bip39 = require("bip39")
 
 const HDWalletProviderMem = require("truffle-hdwallet-provider");
 const Web3 = require('web3');
@@ -41,19 +42,24 @@ export class Main extends CLI{
         this.mainMenu.push(new p.Separator(),"Exit", new p.Separator())
     }
 
-    async start({network,url}:{network?:number, url?:string}) {
+    async start() {
         //Load the mnemonic and web3 instance
         // const mnemonic = "pact inside track layer hello carry used silver pyramid bronze drama time"
-        const mnemonic = await ask('Whats your mnemonic (empty entry will use blank mnemonic - not recommended): ');
+        console.log("Choose Network : \n")
+        const networkChoice = await this.getChoice(["MAIN","KOVAN"])
+        const network = networkChoice == "MAIN"? 1 : 42
+        let url = await ask("Enter network url , empty for infura default : ")
+        let mnemonic = await ask('Whats your mnemonic (empty to create new mnemonic): ');
+        if(!mnemonic || mnemonic==''){
+            mnemonic = bip39.generateMnemonic()
+        }
         let web3:any=undefined
-        if(!network)
-            network=1
-        if(network!=1){
-            if(!url)
-                url = "wss://kovan.infura.io/_ws"
+        if(network==42){
+            if(!url || url=='')
+                url = "wss://kovan.infura.io/ws/v3/09323fc48925428bbae7cefd272dd0c1"
         }
         else{
-            if(!url)
+            if(!url || url=='')
                 url = "wss://mainnet.infura.io/ws/v3/63dbbe242127449b9aeb061c6640ab95"
         }
         web3 = new Web3(new HDWalletProviderMem(mnemonic, url));

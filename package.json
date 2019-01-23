@@ -20,6 +20,7 @@
     "@zapjs/registry": "^2.1.2",
     "@zapjs/subscriber": "^2.0.15",
     "@zapjs/types": "^2.0.10",
+    "bip39": "^2.5.0",
     "inquirer": "^6.2.0",
     "ipfs-mini": "^1.1.2",
     "npm-run-all": "^4.1.3",

@@ -19,7 +19,7 @@ export class ProviderCli extends CLI {
         this.web3 = web3
         this.list = {
             "Get Current Provider's Info" : {args:[{web3},{address:this.provider.providerOwner}], func: [Util,"getProviderInfo"]},
-            "Create Oracle": {args: ["public_key", "title"], func: [this,'initProvider']},
+            "Create Oracle": {args: [], func: [this,'initProvider']},
             "Set Title" :{args:[],func:[this,"setTitle"]},
             "Initiate Endpoint": {args: [], func: [this, 'initProviderCurve']},
             "Clear Endpoint" :{args:[],func:[this,"clearEndpoint"]},
@@ -46,7 +46,8 @@ export class ProviderCli extends CLI {
             return "Provider is not initiated, cant set title"
         }
         const title = await this.getInput("Title")
-        let txid = await this.provider.setTitle({title})
+        const gasPrice = await this.getGasPrice()
+        let txid = await this.provider.setTitle({title,gasPrice})
         return txid
     }
 
@@ -78,21 +79,22 @@ export class ProviderCli extends CLI {
                 break
         }
         console.log("response : ", queryId,responseParams,dynamic)
-        let response = await this.provider.respond({queryId,responseParams,dynamic})
+        const gasPrice = await this.getGasPrice()
+        let response = await this.provider.respond({queryId,responseParams,dynamic,gasPrice})
         return response
 
 
     }
 
     async initProvider(args:any){
-        let title = await this.provider.getTitle()
-        let inputs:any = await this.getInputs(args);
-        if(title && title != ''){
+        let currentTitle = await this.provider.getTitle()
+        if(currentTitle && currentTitle != ''){
             throw "Provider is already initiated"
         }
-        else{
-            return await this.provider.initiateProvider(inputs)
-        }
+        let public_key = await this.getInput("Public Key : ")
+        const title = await this.getInput("Title : ")
+        const gasPrice = await this.getGasPrice()
+        return await this.provider.initiateProvider({public_key,title,gasPrice})
     }
 
     async initProviderCurve():Promise<any>{
@@ -112,7 +114,8 @@ export class ProviderCli extends CLI {
         {
             const curve = await createCurve()
             console.log("curve created : ", curve)
-            return await this.provider.initiateProviderCurve({endpoint,term:curve,broker})
+            const gasPrice = await this.getGasPrice()
+            return await this.provider.initiateProviderCurve({endpoint,term:curve,broker,gasPrice})
         }catch(e){
             return "Error creating curve, please try again" + e
         }
@@ -135,7 +138,8 @@ export class ProviderCli extends CLI {
     async clearEndpoint(){
         const endpoints = await this.provider.getEndpoints()
         const endpoint = await this.getChoice(endpoints)
-        const txid = await this.provider.clearEndpoint({endpoint})
+        const gasPrice = await this.getGasPrice()
+        const txid = await this.provider.clearEndpoint({endpoint,gasPrice})
         return txid
     }
 
@@ -147,10 +151,10 @@ export class ProviderCli extends CLI {
 
     async setEndpointParams(){
         let endpoints = await this.provider.getEndpoints()
-        let e = await this.getChoice(endpoints)
-        let params = await this.getParamsInput("Endpoint Param")
-        let args = {endpoint:e,endpoint_params:params}
-        let setParams = await this.provider.setEndpointParams(args)
+        let endpoint = await this.getChoice(endpoints)
+        let endpoint_params = await this.getParamsInput("Endpoint Param")
+        const gasPrice = await this.getGasPrice()
+        let setParams = await this.provider.setEndpointParams({endpoint,endpoint_params,gasPrice})
         return setParams
     }
     async saveEndpointIpfs(){

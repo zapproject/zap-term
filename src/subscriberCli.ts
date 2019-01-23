@@ -4,7 +4,7 @@ import {NULL_ADDRESS} from "@zapjs/types";
 import {ZapSubscriber} from "@zapjs/subscriber";
 import {ZapBondage} from "@zapjs/bondage"
 import {CLI} from "./abstractCli";
-const {fromWei,utf8ToHex} = require("web3-utils")
+const {fromWei,utf8ToHex,BN,numberToHex} = require("web3-utils")
 export class SubscriberCli extends CLI{
     subscriber : ZapSubscriber
     web3: any
@@ -16,6 +16,7 @@ export class SubscriberCli extends CLI{
         this.list = {
             "Get Subscriber's Bound Dots": {args: [], func: [this, 'getBoundDots']},
             "Get Subscriber's Bound Zaps": {args: [], func: [this, 'getZapBound']},
+            "Approve Provider": {args: [], func: [this,'approveProvider']},
             "Bond To Endpoint": {args: [], func: [this, 'bondToEndpoint']},
             "Unbond To Endpoint": {args: [], func: [this, 'unbondToEndpoint']},
             "Query": {args: [], func: [this, 'query']},
@@ -59,6 +60,19 @@ export class SubscriberCli extends CLI{
             return tx
 
     }
+
+
+    async approveProvider(){
+        const provider = await this.getInput("Provider's address: ")
+        let zapNum = await this.getInput("Zap amount to approve:")
+        if(!zapNum || zapNum==''){
+            throw "Invalid Zap amount input"
+        }
+        const gasPrice = await this.getGasPrice()
+        return await this.subscriber.approveToBond({provider,zapNum,gasPrice})
+    }
+
+
     async bondToEndpoint(){
         let zapBalance = await this.subscriber.getZapBalance()
         if(parseInt(zapBalance.toString())==0) throw "0 Zap Balance, please deposit Zap and continue"
@@ -70,9 +84,11 @@ export class SubscriberCli extends CLI{
             return "Abort Bonding"
         }
         if(zapBalance<requiredZap) throw `Not enough Zap balance, require ${fromWei(requiredZap)} Zap`
-        let bond = await this.subscriber.bond({provider,endpoint,dots})
+        const gasPrice = await this.getGasPrice()
+        let bond = await this.subscriber.bond({provider,endpoint,dots,gasPrice})
         return bond
     }
+
     async unbondToEndpoint(){
         let [provider,endpoint] = await this.getProviderAndEndpoint()
         let boundDots = await this.subscriber.getBoundDots({provider,endpoint})
@@ -85,7 +101,8 @@ export class SubscriberCli extends CLI{
         if(parseInt(dots)==0){
             throw "Cant unbond 0 dots"
         }
-        let unbond = await this.subscriber.unBond({provider,endpoint,dots})
+        const gasPrice = await this.getGasPrice()
+        let unbond = await this.subscriber.unBond({provider,endpoint,dots,gasPrice})
         return unbond
     }
 
@@ -105,7 +122,8 @@ export class SubscriberCli extends CLI{
         let [provider,endpoint] = await this.getProviderAndEndpoint()
         let dots:number|string = await this.getInput("Number of blocks(dots) of subscription")
         let endpointParams:string[] = []
-        let txid = await this.subscriber.subscribe({provider,endpoint,dots,endpointParams})
+        const gasPrice = await this.getGasPrice()
+        let txid = await this.subscriber.subscribe({provider,endpoint,dots,endpointParams,gasPrice})
         return txid
     }
 
@@ -116,7 +134,8 @@ export class SubscriberCli extends CLI{
         if(parseInt(boundDots.toString())==0){
             return "No active subscription"
         }
-        let txid = await this.subscriber.zapArbiter.endSubscriptionSubscriber({provider,endpoint,from:this.subscriber.subscriberOwner})
+        const gasPrice = await this.getGasPrice()
+        let txid = await this.subscriber.zapArbiter.endSubscriptionSubscriber({provider,endpoint,from:this.subscriber.subscriberOwner,gasPrice})
         return txid
     }
 

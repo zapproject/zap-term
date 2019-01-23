@@ -46,6 +46,7 @@ export class CLI{
         answers.push(await p.prompt(inqueries))
         return answers
     }
+
     async getInput(q:string){
         let inp = await p.prompt({
             type:'input',
@@ -82,5 +83,16 @@ export class CLI{
         let endpoints = await provider.getEndpoints()
         let e = await this.getChoice(endpoints)
         return [providerAddress,e,provider]
+    }
+
+    async getGasPrice(){
+        const current_gasPrice = await this.web3.eth.getGasPrice()
+        const gasPrice = await this.getInput("Enter custom gasPrice, empty for default from network "+current_gasPrice+" : ")
+        if(gasPrice==''){
+            return current_gasPrice
+        }
+        else{
+            return null
+        }
     }
 }
