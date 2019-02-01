@@ -1,4 +1,4 @@
-import {InitProvider, ZapRegistry} from "@zapjs/registry";
+import {ZapRegistry} from "@zapjs/registry";
 
 const Util = require("./util")
 const p  = require("inquirer");

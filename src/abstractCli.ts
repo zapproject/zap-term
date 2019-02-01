@@ -7,7 +7,7 @@ export class CLI{
     web3:any
     constructor(){
         this.list = {}
-        this.web3 = new Web3()
+        this.web3 = undefined
     }
     async execute(choice:string){
         let funcs = this.list[choice].func
