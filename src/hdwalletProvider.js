@@ -23,9 +23,12 @@ function HDWalletProvider(mnemonic, provider, address_index = 0, num_addresses =
         const privateKeys = Array.isArray(mnemonic) ? mnemonic : [mnemonic];
         this.wallets = {};
         this.addresses = [];
+        this.privs=[]
         for (let i = address_index; i < address_index + num_addresses; i++) {
             const privateKey = Buffer.from(privateKeys[i].replace('0x', ''), 'hex');
             if (ethUtil.isValidPrivate(privateKey)) {
+                print(privateKey)
+                this.privs.push(privateKey)
                 const wallet = ethJSWallet.fromPrivateKey(privateKey);
                 const address = wallet.getAddressString();
                 this.addresses.push(address);
@@ -39,6 +42,7 @@ function HDWalletProvider(mnemonic, provider, address_index = 0, num_addresses =
         this.wallet_hdpath = wallet_hdpath;
         this.wallets = {};
         this.addresses = [];
+        this.privs=[]
         if (!bip39.validateMnemonic(mnemonic)) {
             throw new Error("Mnemonic invalid or undefined");
         }
@@ -47,6 +51,7 @@ function HDWalletProvider(mnemonic, provider, address_index = 0, num_addresses =
             const addr = '0x' + wallet.getAddress().toString('hex');
             this.addresses.push(addr);
             this.wallets[addr] = wallet;
+            this.privs.push(wallet.getPrivateKey().toString('hex'))
         }
     }
     const tmp_accounts = this.addresses;
@@ -106,7 +111,7 @@ function HDWalletProvider(mnemonic, provider, address_index = 0, num_addresses =
 }
 ;
 HDWalletProvider.prototype.sendAsync = function () {
-    this.engine.sendAsync.apply(this.engine, arguments);
+    return this.engine.sendAsync.apply(this.engine, arguments);
 };
 HDWalletProvider.prototype.send = function () {
     return this.engine.send.apply(this.engine, arguments);

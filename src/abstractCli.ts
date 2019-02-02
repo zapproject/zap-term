@@ -1,13 +1,15 @@
 import {loadProvider} from "./util";
 let Web3 = require("web3")
 const p  = require("inquirer");
-
+const ora = require('ora');
 export class CLI{
     list : {[key:string]:any}
     web3:any
+    spinner:any
     constructor(){
         this.list = {}
         this.web3 = undefined
+        this.spinner = ora('Transaction submitted, waiting for confirmation')
     }
     async execute(choice:string){
         let funcs = this.list[choice].func

@@ -1,4 +1,4 @@
-const {hexToUtf8,fromWei} = require("web3-utils");
+const {hexToUtf8,fromWei,toBN} = require("web3-utils");
 const Util = require("./util")
 const p  = require("inquirer");
 import {ZapProvider} from "@zapjs/provider";
@@ -11,6 +11,8 @@ const ipfs = new IPFS({host:'ipfs.infura.io',port:5001,protocol:'https'})
 const IPFS_GATEWAY = "https://gateway.ipfs.io/ipfs/"
 const fs = require("fs")
 const path = require("path")
+
+
 export class ProviderCli extends CLI {
     provider : ZapProvider
     constructor(web3:any,provider:ZapProvider) {
@@ -47,7 +49,9 @@ export class ProviderCli extends CLI {
         }
         const title = await this.getInput("Title")
         const gasPrice = await this.getGasPrice()
+        this.spinner.start()
         let txid = await this.provider.setTitle({title,gasPrice})
+        this.spinner.stop()
         return txid
     }
 
@@ -80,7 +84,9 @@ export class ProviderCli extends CLI {
         }
         console.log("response : ", queryId,responseParams,dynamic)
         const gasPrice = await this.getGasPrice()
+        this.spinner.start()
         let response = await this.provider.respond({queryId,responseParams,dynamic,gasPrice})
+        this.spinner.stop()
         return response
 
 
@@ -94,7 +100,10 @@ export class ProviderCli extends CLI {
         let public_key = await this.getInput("Public Key : ")
         const title = await this.getInput("Title : ")
         const gasPrice = await this.getGasPrice()
-        return await this.provider.initiateProvider({public_key,title,gasPrice})
+        this.spinner.start()
+        let txid =  await this.provider.initiateProvider({public_key,title,gasPrice})
+        this.spinner.stop()
+        return txid
     }
 
     async initProviderCurve():Promise<any>{
@@ -115,7 +124,9 @@ export class ProviderCli extends CLI {
             const curve = await createCurve()
             console.log("curve created : ", curve)
             const gasPrice = await this.getGasPrice()
-            return await this.provider.initiateProviderCurve({endpoint,term:curve,broker,gasPrice})
+            this.spinner.start()
+            let txid =  await this.provider.initiateProviderCurve({endpoint,term:curve,broker,gasPrice})
+            this.spinner.stop()
         }catch(e){
             return "Error creating curve, please try again" + e
         }
@@ -139,7 +150,9 @@ export class ProviderCli extends CLI {
         const endpoints = await this.provider.getEndpoints()
         const endpoint = await this.getChoice(endpoints)
         const gasPrice = await this.getGasPrice()
+        this.spinner.start()
         const txid = await this.provider.clearEndpoint({endpoint,gasPrice})
+        this.spinner.stop()
         return txid
     }
 
@@ -154,7 +167,9 @@ export class ProviderCli extends CLI {
         let endpoint = await this.getChoice(endpoints)
         let endpoint_params = await this.getParamsInput("Endpoint Param")
         const gasPrice = await this.getGasPrice()
+        this.spinner.start()
         let setParams = await this.provider.setEndpointParams({endpoint,endpoint_params,gasPrice})
+        this.spinner.stop()
         return setParams
     }
     async saveEndpointIpfs(){
@@ -172,7 +187,9 @@ export class ProviderCli extends CLI {
             console.log("saved ipfs ", hash)
             console.log("Ipfs link is created, saving to provider's param")
             //save to provider's param
+            this.spinner.start()
             let txid = await this.provider.setProviderParameter({key: endpoint, value: IPFS_GATEWAY + hash})
+            this.spinner.stop()
             return `Saved ipfs link to provider's param, txid : ${JSON.stringify(txid)}\n Check out at ${IPFS_GATEWAY + hash}`
         }catch(e){
             return e
@@ -202,7 +219,9 @@ export class ProviderCli extends CLI {
                 console.log(content.toString())
                 let hash = await this.saveToIPFS(content.toString())
                 console.log(`Saved content to ipfs ${hash}, saving link to provider's param...`)
+                this.spinner.start()
                 let txid = await this.provider.setProviderParameter({key:`${endpoint}.md`,value:IPFS_GATEWAY+hash})
+                this.spinner.stop()
                 console.log("Saved md link to provider param, check it out at : ",IPFS_GATEWAY+hash)
                 return txid
             }

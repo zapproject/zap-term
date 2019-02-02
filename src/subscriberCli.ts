@@ -4,7 +4,8 @@ import {NULL_ADDRESS} from "@zapjs/types";
 import {ZapSubscriber} from "@zapjs/subscriber";
 import {ZapBondage} from "@zapjs/bondage"
 import {CLI} from "./abstractCli";
-const {fromWei,utf8ToHex,BN,numberToHex} = require("web3-utils")
+const {fromWei,utf8ToHex,BN,numberToHex,toWei} = require("web3-utils")
+
 export class SubscriberCli extends CLI{
     subscriber : ZapSubscriber
     web3: any
@@ -54,9 +55,10 @@ export class SubscriberCli extends CLI{
                 else       resolve(Object.values(data.returnValues).slice(Object.values(data.returnValues).length/2+3));
             });
         });
-
+        this.spinner.start()
         const res = await promise;
         console.log('Response', res);
+        this.spinner.stop()
             return tx
 
     }
@@ -69,7 +71,10 @@ export class SubscriberCli extends CLI{
             throw "Invalid Zap amount input"
         }
         const gasPrice = await this.getGasPrice()
-        return await this.subscriber.approveToBond({provider,zapNum,gasPrice})
+        this.spinner.start()
+        let txid = await this.subscriber.approveToBond({provider,zapNum:toWei(zapNum),gasPrice})
+        this.spinner.stop()
+        return txid
     }
 
 
@@ -83,9 +88,11 @@ export class SubscriberCli extends CLI{
         if(!allow || allow == '' || allow.toLowerCase()=='n'){
             return "Abort Bonding"
         }
-        if(zapBalance<requiredZap) throw `Not enough Zap balance, require ${fromWei(requiredZap)} Zap`
+        if(parseFloat(zapBalance.toString())<parseFloat(requiredZap.toString())) throw `Not enough Zap balance, require ${fromWei(requiredZap)} Zap`
         const gasPrice = await this.getGasPrice()
+        this.spinner.start()
         let bond = await this.subscriber.bond({provider,endpoint,dots,gasPrice})
+        this.spinner.stop()
         return bond
     }
 
@@ -102,7 +109,9 @@ export class SubscriberCli extends CLI{
             throw "Cant unbond 0 dots"
         }
         const gasPrice = await this.getGasPrice()
+        this.spinner.start()
         let unbond = await this.subscriber.unBond({provider,endpoint,dots,gasPrice})
+        this.spinner.stop()
         return unbond
     }
 
@@ -123,7 +132,9 @@ export class SubscriberCli extends CLI{
         let dots:number|string = await this.getInput("Number of blocks(dots) of subscription")
         let endpointParams:string[] = []
         const gasPrice = await this.getGasPrice()
+        this.spinner.start()
         let txid = await this.subscriber.subscribe({provider,endpoint,dots,endpointParams,gasPrice})
+        this.spinner.stop()
         return txid
     }
 
@@ -135,7 +146,9 @@ export class SubscriberCli extends CLI{
             return "No active subscription"
         }
         const gasPrice = await this.getGasPrice()
+        this.spinner.start()
         let txid = await this.subscriber.zapArbiter.endSubscriptionSubscriber({provider,endpoint,from:this.subscriber.subscriberOwner,gasPrice})
+        this.spinner.stop()
         return txid
     }
 

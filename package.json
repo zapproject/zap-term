@@ -7,7 +7,7 @@
   "scripts": {
     "build": "./node_modules/.bin/tsc -t es2018",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "update":"cp src/hdwalletProvider.js lib/",
+    "update": "cp src/hdwalletProvider.js lib/",
     "cli": "node lib/index",
     "start": "run-s build update cli"
   },
@@ -25,9 +25,11 @@
     "inquirer": "^6.2.0",
     "ipfs-mini": "^1.1.2",
     "npm-run-all": "^4.1.3",
+    "ora": "^3.0.0",
     "truffle-hdwallet-provider-privkey": "^0.2.0",
     "web3": "1.0.0-beta.37",
-    "web3-hdwallet-provider": "^0.2.4"
+    "web3-hdwallet-provider": "^0.2.4",
+    "web3-provider-engine": "^14.1.0"
   },
   "devDependencies": {
     "@types/node": "^10.10.1",
