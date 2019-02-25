@@ -34,10 +34,12 @@ export class SubscriberCli extends CLI{
         let [provider,endpoint] = await this.getProviderAndEndpoint()
         let query = await this.getInput("query")
         let endpointParams = await this.getParamsInput("Param")
+        this.spinner.start()
         let tx = await this.subscriber.queryData({provider,query,endpoint,endpointParams})
         const _id = tx.events['Incoming'].returnValues['id'];
         const id = this.web3.utils.toBN(_id);
         console.log('Query ID generate was', '0x' + id.toString(16));
+        this.spinner.stop()
 
         // Create a promise to get response
         const promise: Promise<any> = new Promise((resolve: any, reject: any) => {
@@ -55,11 +57,9 @@ export class SubscriberCli extends CLI{
                 else       resolve(Object.values(data.returnValues).slice(Object.values(data.returnValues).length/2+3));
             });
         });
-        this.spinner.start()
         const res = await promise;
         console.log('Response', res);
-        this.spinner.stop()
-            return tx
+        return res
 
     }
 

@@ -16,7 +16,7 @@ import {TemplateCli} from "./templateCli";
 const bip39 = require("bip39")
 
 const HDWalletProviderMem = require("./hdwalletProvider");
-import {WebsocketProvider} from "web3-providers"
+// const HDWalletProviderMem = require("truffle-hdwallet-provider");
 const Web3 = require('web3');
 
 export class Main extends CLI{
@@ -67,6 +67,7 @@ export class Main extends CLI{
         try{
             let hd = new HDWalletProviderMem(mnemonic, url)
             this.web3 = new Web3(hd)
+            // console.log("### GET ACCOUNTS ",this.web3)
             // Get the provider and zap packages
             let options = {networkId: (await this.web3.eth.net.getId()).toString(),networkProvider: this.web3.currentProvider}
             let registry = new ZapRegistry(options)

@@ -208,11 +208,13 @@ export class ProviderCli extends CLI {
     async saveMDfileToipfs(){
         let endpoints = await this.provider.getEndpoints()
         let endpoint  = await this.getChoice(endpoints)
+        let saved = false
         let files = await fs.readdirSync(path.join(__dirname,"../md"))
-        if(files.length==0){
+        if(files.length==0 || !files.includes(`${endpoint}.md`) ){
             return `Cant find ${endpoint}.md file to load, make sure you include it in md folder`
         }
         for(let file of files){
+            console.log(file)
             if(file == `${endpoint}.md`){
                 console.log(`saving file ${file}`)
                 let content = await fs.readFileSync(path.join(__dirname,"../md",file))
@@ -223,8 +225,12 @@ export class ProviderCli extends CLI {
                 let txid = await this.provider.setProviderParameter({key:`${endpoint}.md`,value:IPFS_GATEWAY+hash})
                 this.spinner.stop()
                 console.log("Saved md link to provider param, check it out at : ",IPFS_GATEWAY+hash)
+                saved = true
                 return txid
             }
+        }
+        if(!saved){
+            return "Failed to save file to ipfs and provider's param : "
         }
         return endpoint
 

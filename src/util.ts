@@ -1,6 +1,6 @@
 import { ZapProvider } from "@zapjs/provider";
 import { ZapSubscriber } from "@zapjs/subscriber";
-const {fromWei}  = require("web3-utils")
+const {fromWei, hexToUtf8}  = require("web3-utils")
 import { join } from "path";
 import * as readline from "readline";
 
@@ -119,8 +119,9 @@ export async function viewInfo({web3}: any) {
 }
 
 export async function getProviderInfo({web3}:any,{address}:any){
-    console.log(address)
+    // console.log(address)
     let provider = await loadProvider(web3, address);
+		let providerParams:any={}
     try{
         let EP:any={}
         let title = await provider.getTitle();
@@ -128,18 +129,22 @@ export async function getProviderInfo({web3}:any,{address}:any){
         let pubkey = await provider.getPubkey()
         let endpoints = await provider.getEndpoints()
         let params = await provider.getAllProviderParams()
+				for(let p of params){
+					providerParams[hexToUtf8(p)] = hexToUtf8(await provider.getProviderParam(hexToUtf8(p)))
+				}
         for(let e of endpoints) {
             EP[e] = {}
             EP[e]['Bonding Curve'] = await provider.getCurve(e)
             EP[e]['ZapBound'] = await provider.getZapBound(e)
-            EP[e]['Params'] = await provider.getEndpointParams(e)
+            EP[e]['Params'] = (await provider.getEndpointParams(e)).map(i=>{return hexToUtf8(i)})
         }
         console.log(`Provider is existed in Registry :
             \nOwner: ${provider.providerOwner}
             \nTitle: ${title},
             \nPublic Key : ${pubkey}
-            \nParams : ${params}
-            \nEndpoints: ${endpoints}`)
+            \nParams :`)
+						console.dir(providerParams,{depth:null})
+						console.log(`\nEndpoints: ${endpoints}`)
             console.dir(EP,{depth:null})
     }catch(e){
         console.error(e)
