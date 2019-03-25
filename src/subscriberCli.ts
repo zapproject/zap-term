@@ -31,14 +31,16 @@ export class SubscriberCli extends CLI{
     }
 
     async query(){
+      try{
         let [provider,endpoint] = await this.getProviderAndEndpoint()
         let query = await this.getInput("query")
         let endpointParams = await this.getParamsInput("Param")
+        const gasPrice = await this.getGasPrice()
         this.spinner.start()
-        let tx = await this.subscriber.queryData({provider,query,endpoint,endpointParams})
+        let tx = await this.subscriber.queryData({provider,query,endpoint,endpointParams,gasPrice})
         const _id = tx.events['Incoming'].returnValues['id'];
         const id = this.web3.utils.toBN(_id);
-        console.log('Query ID generate was', '0x' + id.toString(16));
+        console.log(`\nQuery ID generate was', 0x${id.toString(16)}`);
         this.spinner.stop()
 
         // Create a promise to get response
@@ -60,11 +62,17 @@ export class SubscriberCli extends CLI{
         const res = await promise;
         console.log('Response', res);
         return res
+      }catch(e){
+        this.spinner.stop()
+        console.error(e)
+        return e
+      }
 
     }
 
 
     async approveProvider(){
+      try{
         const provider = await this.getInput("Provider's address: ")
         let zapNum = await this.getInput("Zap amount to approve:")
         if(!zapNum || zapNum==''){
@@ -75,10 +83,15 @@ export class SubscriberCli extends CLI{
         let txid = await this.subscriber.approveToBond({provider,zapNum:toWei(zapNum),gasPrice})
         this.spinner.stop()
         return txid
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
     }
 
 
     async bondToEndpoint(){
+      try{
         let zapBalance = await this.subscriber.getZapBalance()
         if(parseInt(zapBalance.toString())==0) throw "0 Zap Balance, please deposit Zap and continue"
         let [provider,endpoint,providerObject] = await this.getProviderAndEndpoint()
@@ -94,9 +107,14 @@ export class SubscriberCli extends CLI{
         let bond = await this.subscriber.bond({provider,endpoint,dots,gasPrice})
         this.spinner.stop()
         return bond
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
     }
 
     async unbondToEndpoint(){
+      try{
         let [provider,endpoint] = await this.getProviderAndEndpoint()
         let boundDots = await this.subscriber.getBoundDots({provider,endpoint})
          if(boundDots==0){
@@ -113,6 +131,10 @@ export class SubscriberCli extends CLI{
         let unbond = await this.subscriber.unBond({provider,endpoint,dots,gasPrice})
         this.spinner.stop()
         return unbond
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
     }
 
     async getBoundDots(){
@@ -128,6 +150,7 @@ export class SubscriberCli extends CLI{
     }
 
     async startSubscription(){
+      try{
         let [provider,endpoint] = await this.getProviderAndEndpoint()
         let dots:number|string = await this.getInput("Number of blocks(dots) of subscription")
         let endpointParams:string[] = []
@@ -136,9 +159,14 @@ export class SubscriberCli extends CLI{
         let txid = await this.subscriber.subscribe({provider,endpoint,dots,endpointParams,gasPrice})
         this.spinner.stop()
         return txid
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
     }
 
     async endSubscription(){
+      try{
         let [provider,endpoint] = await this.getProviderAndEndpoint()
         let boundDots = await this.subscriber.zapArbiter.getDots({subscriber:this.subscriber.subscriberOwner,provider,endpoint:utf8ToHex(endpoint)})
         console.log("bound dots : ", boundDots)
@@ -150,6 +178,10 @@ export class SubscriberCli extends CLI{
         let txid = await this.subscriber.zapArbiter.endSubscriptionSubscriber({provider,endpoint,from:this.subscriber.subscriberOwner,gasPrice})
         this.spinner.stop()
         return txid
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
     }
 
     async getSubscription(){

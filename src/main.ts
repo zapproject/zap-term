@@ -15,8 +15,7 @@ import {GeneralCli} from "./generalCli";
 import {TemplateCli} from "./templateCli";
 const bip39 = require("bip39")
 
-const HDWalletProviderMem = require("./hdwalletProvider");
-// const HDWalletProviderMem = require("truffle-hdwallet-provider");
+const HDWalletProviderMem = require("truffle-hdwallet-provider");
 const Web3 = require('web3');
 
 export class Main extends CLI{
@@ -50,7 +49,7 @@ export class Main extends CLI{
         const networkChoice = await this.getChoice(["MAIN","KOVAN"])
         const network = networkChoice == "MAIN"? 1 : 42
         let url = await ask("Enter network url , empty for infura default : ")
-        let mnemonic = await ask('Whats your mnemonic (empty to create new mnemonic): ');
+        let mnemonic = await this.getPassword('Whats your mnemonic (empty to create new mnemonic): ');
         if(!mnemonic || mnemonic==''){
             mnemonic = bip39.generateMnemonic()
             console.log("New Mnemonic : ", mnemonic)

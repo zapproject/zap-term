@@ -1,6 +1,7 @@
 const {hexToUtf8,fromWei,toBN} = require("web3-utils");
 const Util = require("./util")
 const p  = require("inquirer");
+p.registerPrompt('fuzzypath', require('inquirer-fuzzy-path'))
 import {ZapProvider} from "@zapjs/provider";
 import {ask} from "./util";
 import {createCurve} from "./curve"
@@ -23,26 +24,71 @@ export class ProviderCli extends CLI {
             "Get Current Provider's Info" : {args:[{web3},{address:this.provider.providerOwner}], func: [Util,"getProviderInfo"]},
             "Create Oracle": {args: [], func: [this,'initProvider']},
             "Set Title" :{args:[],func:[this,"setTitle"]},
+            "Get Params": {args: [], func: [this, 'getAllProviderParams']},
+            "Set Params": {args: ["key", "value"], func: [provider, 'setProviderParameter']},
+            "Create IPFS file for Endpoint's info": {args:[],func: [this,"saveMDfileToipfs"]},
             "Initiate Endpoint": {args: [], func: [this, 'initProviderCurve']},
             "Clear Endpoint" :{args:[],func:[this,"clearEndpoint"]},
             "List Endpoints": {args: [], func: [this.provider, 'getEndpoints']},
             "Get Endpoint's Info" : {args:[], func: [this,"getEndpointInfo"]},
-            "Get Provider's Bound Dots": {args: ["endpoint", "subscriber"], func: [provider, 'getBoundDots']},
-            "Get Provider's Bound Zaps": {args: ["endpoint"], func: [provider, 'getZapBound']},
             "Get Endpoint Params": {args: [], func: [this, 'getEndpointParams']},
             "Set Endpoint Params": {args: [], func: [this, 'setEndpointParams']},
-            "Get Params": {args: [], func: [this, 'getAllProviderParams']},
-            "Get Param": {args: [], func: [this, 'getProviderParam']},
-            "Set Params": {args: ["key", "value"], func: [provider, 'setProviderParameter']},
             "Save endpoint to ipfs":{args:[],func:[this,"saveEndpointIpfs"]},
-            "Save .md file to ipfs": {args:[],func: [this,"saveMDfileToipfs"]},
+            "Get Bound Dots Amount": {args: [], func: [this, 'getBoundDotsInfo']},
+            "Get Bound Zaps Amount": {args: ["endpoint"], func: [provider, 'getZapBound']},
+            "Unbond dots for Zap": {args:[],func:[this,"unbondDots"]},
             "Respond To Query": {args: [], func: [this, 'respondToQuery']},
             "Listen to Queries": {args: [], func: [this, 'listenQueries']}
         }
     }
 
+    async unbondDots(){
+      try{
+        const endpoints = await this.provider.getEndpoints()
+        const endpoint = await this.getChoice(endpoints)
+        const boundDots = await this.provider.getBoundDots({endpoint,subscriber:this.provider.providerOwner})
+        const dots = await this.getInput(`
+          You have ${boundDots} dots bounds.
+          How many do you want to unbond?`)
+        if(parseInt(dots)<1){
+          return "Amount of dots to unbond has to be > 1 "
+        }
+        if(parseInt(dots)> parseInt(boundDots.toString())){
+          return "Bound dots is smaller than entered amount : "+boundDots
+        }
+        this.spinner.start()
+        const gas = await this.getGasPrice()
+        const txid = await this.provider.zapBondage.unbond({
+          provider:this.provider.providerOwner,
+          endpoint,
+          dots,
+          from:this.provider.providerOwner,
+          gas
+        })
+        this.spinner.stop()
+        return txid
+      }
+      catch(e){
+        this.spinner.stop()
+        return e
+      }
+
+
+    }
+
+    async getBoundDotsInfo(){
+      try{
+        const endpoints = await this.provider.getEndpoints()
+        const endpoint = await this.getChoice(endpoints)
+        const bounddots = await this.provider.getBoundDots({endpoint:endpoint,subscriber:this.provider.providerOwner})
+        return bounddots
+      }catch(e){
+        return e
+      }
+    }
 
     async setTitle(){
+      try{
         const currentTitle = await this.provider.getTitle()
         if(!currentTitle || currentTitle==''){
             return "Provider is not initiated, cant set title"
@@ -53,10 +99,15 @@ export class ProviderCli extends CLI {
         let txid = await this.provider.setTitle({title,gasPrice})
         this.spinner.stop()
         return txid
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
     }
 
 
     async respondToQuery(){
+      try{
         let queryId = await this.getInput("Query Id")
         let dynamic = false
         let responseParams = []
@@ -88,11 +139,16 @@ export class ProviderCli extends CLI {
         let response = await this.provider.respond({queryId,responseParams,dynamic,gasPrice})
         this.spinner.stop()
         return response
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
 
 
     }
 
     async initProvider(args:any){
+      try{
         let currentTitle = await this.provider.getTitle()
         if(currentTitle && currentTitle != ''){
             throw "Provider is already initiated"
@@ -104,6 +160,10 @@ export class ProviderCli extends CLI {
         let txid =  await this.provider.initiateProvider({public_key,title,gasPrice})
         this.spinner.stop()
         return txid
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
     }
 
     async initProviderCurve():Promise<any>{
@@ -128,6 +188,7 @@ export class ProviderCli extends CLI {
             let txid =  await this.provider.initiateProviderCurve({endpoint,term:curve,broker,gasPrice})
             this.spinner.stop()
         }catch(e){
+            this.spinner.stop()
             return "Error creating curve, please try again" + e
         }
     }
@@ -147,6 +208,7 @@ export class ProviderCli extends CLI {
     }
 
     async clearEndpoint(){
+      try{
         const endpoints = await this.provider.getEndpoints()
         const endpoint = await this.getChoice(endpoints)
         const gasPrice = await this.getGasPrice()
@@ -154,6 +216,10 @@ export class ProviderCli extends CLI {
         const txid = await this.provider.clearEndpoint({endpoint,gasPrice})
         this.spinner.stop()
         return txid
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
     }
 
     async getEndpointParams(){
@@ -163,6 +229,7 @@ export class ProviderCli extends CLI {
     }
 
     async setEndpointParams(){
+      try{
         let endpoints = await this.provider.getEndpoints()
         let endpoint = await this.getChoice(endpoints)
         let endpoint_params = await this.getParamsInput("Endpoint Param")
@@ -171,6 +238,10 @@ export class ProviderCli extends CLI {
         let setParams = await this.provider.setEndpointParams({endpoint,endpoint_params,gasPrice})
         this.spinner.stop()
         return setParams
+      }catch(e){
+        this.spinner.stop()
+        return e
+      }
     }
     async saveEndpointIpfs(){
         try {
@@ -192,6 +263,7 @@ export class ProviderCli extends CLI {
             this.spinner.stop()
             return `Saved ipfs link to provider's param, txid : ${JSON.stringify(txid)}\n Check out at ${IPFS_GATEWAY + hash}`
         }catch(e){
+          this.spinner.stop()
             return e
         }
     }
@@ -209,26 +281,19 @@ export class ProviderCli extends CLI {
         let endpoints = await this.provider.getEndpoints()
         let endpoint  = await this.getChoice(endpoints)
         let saved = false
-        let files = await fs.readdirSync(path.join(__dirname,"../md"))
-        if(files.length==0 || !files.includes(`${endpoint}.md`) ){
-            return `Cant find ${endpoint}.md file to load, make sure you include it in md folder`
-        }
-        for(let file of files){
-            console.log(file)
-            if(file == `${endpoint}.md`){
-                console.log(`saving file ${file}`)
-                let content = await fs.readFileSync(path.join(__dirname,"../md",file))
-                console.log(content.toString())
-                let hash = await this.saveToIPFS(content.toString())
-                console.log(`Saved content to ipfs ${hash}, saving link to provider's param...`)
-                this.spinner.start()
-                let txid = await this.provider.setProviderParameter({key:`${endpoint}.md`,value:IPFS_GATEWAY+hash})
-                this.spinner.stop()
-                console.log("Saved md link to provider param, check it out at : ",IPFS_GATEWAY+hash)
-                saved = true
-                return txid
-            }
-        }
+        let content = await this.getInput(`
+        Enter information about this endpoint,
+        This information will be saved on ipfs
+        ipfs link will be saved as Endpoint's parameters`)
+        let hash = await this.saveToIPFS(content.toString())
+        console.log(`Saved content to ipfs ${hash}, saving link to provider's param...`)
+        this.spinner.start()
+        let txid = await this.provider.setProviderParameter({key:`${endpoint}.md`,value:IPFS_GATEWAY+hash})
+        this.spinner.stop()
+        console.log("Saved md link to provider param, check it out at : ",IPFS_GATEWAY+hash)
+        saved = true
+        return txid
+
         if(!saved){
             return "Failed to save file to ipfs and provider's param : "
         }
@@ -236,11 +301,6 @@ export class ProviderCli extends CLI {
 
     }
 
-    async getProviderParam(){
-        let key = await this.getInput("Key")
-        let param = await this.provider.getProviderParam(key)
-        return hexToUtf8(param)
-    }
 
     async getAllProviderParams(){
         let keys = await this.provider.getAllProviderParams()

@@ -58,6 +58,16 @@ export class CLI{
         return inp['res']
     }
 
+    async getPassword(q:string){
+        let inp = await p.prompt({
+            type:'password',
+            mask:true,
+            name:'res',
+            message : q
+        })
+        return inp['res']
+    }
+
     async getParamsInput(name : string, length?:number|undefined){
         let params = []
         let inp:string|any = ''
