@@ -15,7 +15,7 @@ import {GeneralCli} from "./generalCli";
 import {TemplateCli} from "./templateCli";
 const bip39 = require("bip39")
 
-const HDWalletProviderMem = require("truffle-hdwallet-provider");
+const HDWalletProviderMem = require("@truffle/hdwallet-provider");
 const Web3 = require('web3');
 
 export class Main extends CLI{
